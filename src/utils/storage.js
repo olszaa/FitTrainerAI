@@ -189,7 +189,10 @@ export const createNewUser = (userData) => {
   const newId = `user-${Date.now()}`;
   const newUser = {
     id: newId,
-    name: userData.name?.trim() || `นักกีฬาคนที่ ${users.length + 1}`,
+    username: userData.username?.trim() || userData.name?.trim() || `user_${Date.now().toString().slice(-4)}`,
+    name: userData.name?.trim() || userData.username?.trim() || `นักกีฬาคนที่ ${users.length + 1}`,
+    email: userData.email?.trim() || '',
+    pinCode: userData.password?.trim() || userData.pinCode?.trim() || '',
     avatar: userData.avatar || '🏋️‍♂️',
     gender: userData.gender || 'MALE',
     age: Number(userData.age) || 25,

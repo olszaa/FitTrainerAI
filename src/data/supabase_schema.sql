@@ -6,7 +6,9 @@
 -- 1. Profiles Table (ผู้ใช้งานและข้อมูลสรีระ)
 CREATE TABLE IF NOT EXISTS public.profiles (
     id TEXT PRIMARY KEY,
+    username TEXT,
     name TEXT NOT NULL,
+    email TEXT,
     avatar TEXT DEFAULT '🏋️‍♂️',
     custom_avatar_url TEXT,
     gender TEXT DEFAULT 'MALE',

@@ -31,7 +31,9 @@ export const syncProfileToSupabase = async (profile) => {
   try {
     const payload = {
       id: profile.id,
+      username: profile.username || profile.name || null,
       name: profile.name,
+      email: profile.email || null,
       avatar: profile.avatar || '🏋️‍♂️',
       custom_avatar_url: profile.customAvatarUrl || null,
       gender: profile.gender || 'MALE',
@@ -71,7 +73,9 @@ export const fetchProfileFromSupabase = async (userId) => {
 
     return {
       id: data.id,
+      username: data.username || data.name,
       name: data.name,
+      email: data.email || '',
       avatar: data.avatar,
       customAvatarUrl: data.custom_avatar_url,
       gender: data.gender,
@@ -104,7 +108,9 @@ export const fetchAllProfilesFromSupabase = async () => {
 
     return data.map((d) => ({
       id: d.id,
+      username: d.username || d.name,
       name: d.name,
+      email: d.email || '',
       avatar: d.avatar || '🏋️‍♂️',
       customAvatarUrl: d.custom_avatar_url,
       gender: d.gender,

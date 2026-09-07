@@ -12,7 +12,8 @@ import {
   CheckCircle2,
   Users,
   Award,
-  Zap
+  Zap,
+  Mail
 } from 'lucide-react';
 import {
   getUserProfile,
@@ -66,7 +67,10 @@ export default function LoginScreen({
 
   // Registration Form State
   const [registerForm, setRegisterForm] = useState({
+    username: '',
+    password: '',
     name: '',
+    email: '',
     avatar: '🏋️‍♂️',
     gender: 'MALE',
     age: 26,
@@ -214,12 +218,21 @@ export default function LoginScreen({
 
   const handleRegisterSubmit = async (e) => {
     e.preventDefault();
-    if (!registerForm.name.trim()) return;
+    if (!registerForm.username.trim() && !registerForm.name.trim()) return;
+
+    const payload = {
+      ...registerForm,
+      username: registerForm.username.trim() || registerForm.name.trim(),
+      name: registerForm.name.trim() || registerForm.username.trim(),
+      password: registerForm.password.trim() || registerForm.pinCode.trim(),
+      pinCode: registerForm.password.trim() || registerForm.pinCode.trim(),
+      email: registerForm.email.trim()
+    };
 
     setIsCloudSyncing(true);
     setSyncStatusMsg('✨ กำลังสร้างบัญชีและซิงค์ข้อมูลไปยัง Cloud...');
-    const { newUser } = createNewUser(registerForm);
-    if (onCreateUser) onCreateUser(registerForm);
+    const { newUser } = createNewUser(payload);
+    if (onCreateUser) onCreateUser(payload);
     await syncUserDataFromCloudToLocal(newUser.id);
     setIsCloudSyncing(false);
     setSyncStatusMsg('');
@@ -594,48 +607,127 @@ export default function LoginScreen({
                 </div>
               </div>
 
-              {/* Name & Gender */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-slate-300 font-bold mb-1">
-                    ชื่อผู้ใช้งาน <span className="text-rose-400">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="เช่น คุณยท, Nickname"
-                    value={registerForm.name}
-                    onChange={(e) => setRegisterForm({ ...registerForm, name: e.target.value })}
-                    className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-3.5 py-2.5 outline-none focus:border-cyan-500 font-bold"
-                  />
+              {/* 4 Main Credentials: Username, Password, Name, Email */}
+              <div className="bg-slate-900/80 border border-cyan-500/30 rounded-2xl p-4 space-y-3.5 shadow-inner">
+                <div className="text-[11px] font-black text-cyan-400 uppercase tracking-wider flex items-center space-x-1.5 border-b border-slate-800 pb-2">
+                  <Key className="w-3.5 h-3.5" />
+                  <span>ข้อมูลบัญชีหลัก (Account Credentials)</span>
                 </div>
 
-                <div>
-                  <label className="block text-slate-300 font-bold mb-1">เพศสรีระ</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setRegisterForm({ ...registerForm, gender: 'MALE' })}
-                      className={`py-2 rounded-xl font-bold border transition-all ${
-                        registerForm.gender === 'MALE'
-                          ? 'bg-cyan-500/20 border-cyan-500 text-cyan-300 font-black'
-                          : 'bg-slate-900 border-slate-800 text-slate-400'
-                      }`}
-                    >
-                      👨 ชาย
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setRegisterForm({ ...registerForm, gender: 'FEMALE' })}
-                      className={`py-2 rounded-xl font-bold border transition-all ${
-                        registerForm.gender === 'FEMALE'
-                          ? 'bg-pink-500/20 border-pink-500 text-pink-300 font-black'
-                          : 'bg-slate-900 border-slate-800 text-slate-400'
-                      }`}
-                    >
-                      👩 หญิง
-                    </button>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {/* 1. Username */}
+                  <div>
+                    <label className="block text-slate-300 font-bold mb-1">
+                      1. Username (ชื่อผู้ใช้เข้าระบบ) <span className="text-rose-400">*</span>
+                    </label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-cyan-400" />
+                      <input
+                        type="text"
+                        required
+                        placeholder="เช่น ake_fit, john99"
+                        value={registerForm.username}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setRegisterForm({
+                            ...registerForm,
+                            username: val,
+                            name: registerForm.name || val
+                          });
+                        }}
+                        className="w-full bg-slate-950 border border-slate-700 text-white rounded-xl pl-9 pr-3 py-2.5 outline-none focus:border-cyan-400 font-bold"
+                      />
+                    </div>
                   </div>
+
+                  {/* 2. Password */}
+                  <div>
+                    <label className="block text-slate-300 font-bold mb-1">
+                      2. Password (รหัสผ่าน / PIN) <span className="text-rose-400">*</span>
+                    </label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-400" />
+                      <input
+                        type="password"
+                        required
+                        placeholder="ตั้งรหัสผ่าน หรือ PIN 4 หลัก"
+                        value={registerForm.password}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setRegisterForm({
+                            ...registerForm,
+                            password: val,
+                            pinCode: val
+                          });
+                        }}
+                        className="w-full bg-slate-950 border border-slate-700 text-white rounded-xl pl-9 pr-3 py-2.5 outline-none focus:border-purple-400 font-mono tracking-widest font-bold"
+                      />
+                    </div>
+                  </div>
+
+                  {/* 3. Display Name */}
+                  <div>
+                    <label className="block text-slate-300 font-bold mb-1">
+                      3. ชื่อ-นามสกุล (Display Name) <span className="text-rose-400">*</span>
+                    </label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-lime-400" />
+                      <input
+                        type="text"
+                        required
+                        placeholder="เช่น คุณเอก (Ake)"
+                        value={registerForm.name}
+                        onChange={(e) => setRegisterForm({ ...registerForm, name: e.target.value })}
+                        className="w-full bg-slate-950 border border-slate-700 text-white rounded-xl pl-9 pr-3 py-2.5 outline-none focus:border-lime-400 font-bold"
+                      />
+                    </div>
+                  </div>
+
+                  {/* 4. Email */}
+                  <div>
+                    <label className="block text-slate-300 font-bold mb-1">
+                      4. อีเมล (Email Address)
+                    </label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-400" />
+                      <input
+                        type="email"
+                        placeholder="เช่น user@example.com"
+                        value={registerForm.email}
+                        onChange={(e) => setRegisterForm({ ...registerForm, email: e.target.value })}
+                        className="w-full bg-slate-950 border border-slate-700 text-white rounded-xl pl-9 pr-3 py-2.5 outline-none focus:border-amber-400 font-bold"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Gender Selection */}
+              <div>
+                <label className="block text-slate-300 font-bold mb-1">เพศสรีระ</label>
+                <div className="grid grid-cols-2 gap-2 max-w-md">
+                  <button
+                    type="button"
+                    onClick={() => setRegisterForm({ ...registerForm, gender: 'MALE' })}
+                    className={`py-2 rounded-xl font-bold border transition-all ${
+                      registerForm.gender === 'MALE'
+                        ? 'bg-cyan-500/20 border-cyan-500 text-cyan-300 font-black'
+                        : 'bg-slate-900 border-slate-800 text-slate-400'
+                    }`}
+                  >
+                    👨 ชาย
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRegisterForm({ ...registerForm, gender: 'FEMALE' })}
+                    className={`py-2 rounded-xl font-bold border transition-all ${
+                      registerForm.gender === 'FEMALE'
+                        ? 'bg-pink-500/20 border-pink-500 text-pink-300 font-black'
+                        : 'bg-slate-900 border-slate-800 text-slate-400'
+                    }`}
+                  >
+                    👩 หญิง
+                  </button>
                 </div>
               </div>
 
