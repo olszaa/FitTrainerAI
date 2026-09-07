@@ -220,10 +220,10 @@ export default function LoginScreen({
                 <span>🌐 Cloud Sync — สมัครสมาชิกแล้วล็อกอินได้จากทุกเครื่อง</span>
               </div>
               <h2 className="text-2xl sm:text-3xl font-black text-white">
-                ยินดีต้อนรับกลับมา 👋
+                🔑 เข้าสู่ระบบใช้งาน (Log In)
               </h2>
               <p className="text-xs sm:text-sm text-slate-400 max-w-md mx-auto">
-                เลือกโปรไฟล์ผู้ใช้งานของคุณเพื่อเข้าสู่ระบบ ซิงค์ข้อมูลข้ามเครื่องอัตโนมัติ
+                กดปุ่ม <strong className="text-cyan-300">"เข้าสู่ระบบ"</strong> ที่บัญชีของคุณด้านล่าง เพื่อเข้าใช้งานบันทึกการออกกำลังกาย
               </p>
             </div>
 
@@ -265,17 +265,32 @@ export default function LoginScreen({
                       </div>
                     </div>
 
-                    {/* Right Lock / Login Icon */}
+                    {/* Prominent Login Button */}
                     <div className="flex items-center space-x-2 shrink-0 pl-2">
                       {isPinProtected ? (
-                        <span className="flex items-center space-x-1 px-2.5 py-1 rounded-xl bg-purple-500/15 text-purple-300 border border-purple-500/30 text-xs font-bold">
-                          <Lock className="w-3.5 h-3.5" />
-                          <span className="hidden xs:inline">PIN</span>
-                        </span>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleSelectUser(user);
+                          }}
+                          className="px-3.5 py-2.5 rounded-2xl bg-purple-500/20 hover:bg-purple-500 text-purple-300 hover:text-white border border-purple-500/40 text-xs font-black transition-all flex items-center space-x-1.5 shadow-md active:scale-95"
+                        >
+                          <Lock className="w-4 h-4" />
+                          <span>ใส่ PIN เข้าสู่ระบบ</span>
+                        </button>
                       ) : (
-                        <div className="w-9 h-9 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 group-hover:bg-cyan-500 group-hover:text-slate-950 flex items-center justify-center transition-all">
-                          <ArrowRight className="w-4 h-4" />
-                        </div>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleSelectUser(user);
+                          }}
+                          className="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-cyan-500 to-lime-400 hover:brightness-110 text-slate-950 text-xs font-black transition-all flex items-center space-x-1.5 shadow-lg shadow-cyan-500/20 active:scale-95 group-hover:scale-105"
+                        >
+                          <span>เข้าสู่ระบบ</span>
+                          <ArrowRight className="w-4 h-4 stroke-[3]" />
+                        </button>
                       )}
                     </div>
                   </div>
@@ -287,9 +302,9 @@ export default function LoginScreen({
             <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
               <button
                 onClick={() => setView('REGISTER')}
-                className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-gradient-to-r from-cyan-500 to-lime-400 text-slate-950 font-black text-xs transition-all shadow-lg shadow-cyan-500/20 flex items-center justify-center space-x-2 active:scale-95"
+                className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 font-extrabold text-xs transition-all shadow-lg flex items-center justify-center space-x-2 active:scale-95"
               >
-                <UserPlus className="w-4 h-4 stroke-[3]" />
+                <UserPlus className="w-4 h-4 text-cyan-400 stroke-[2.5]" />
                 <span>+ สมัครสมาชิก / เพิ่มผู้ใช้งานใหม่</span>
               </button>
             </div>
