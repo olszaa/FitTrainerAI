@@ -234,15 +234,13 @@ export const syncCloudProfilesToLocal = async () => {
     localUsers.forEach((u) => userMap.set(u.id, u));
 
     cloudProfiles.forEach((cp) => {
-      userMap.set(cp.id, {
+      const mergedProfile = {
         ...userMap.get(cp.id),
         ...cp,
         hasPin: Boolean(cp.pinCode && String(cp.pinCode).trim().length > 0)
-      });
-      const profileKey = `fittrainer_user_profile_${cp.id}`;
-      if (!localStorage.getItem(profileKey)) {
-        localStorage.setItem(profileKey, JSON.stringify(cp));
-      }
+      };
+      userMap.set(cp.id, mergedProfile);
+      localStorage.setItem(`fittrainer_user_profile_${cp.id}`, JSON.stringify(mergedProfile));
     });
 
     const mergedUsers = Array.from(userMap.values());
@@ -267,6 +265,18 @@ export const syncUserDataFromCloudToLocal = async (userId) => {
 
     if (profile) {
       localStorage.setItem(`fittrainer_user_profile_${userId}`, JSON.stringify(profile));
+      const users = getUsersList();
+      const existingIdx = users.findIndex((u) => u.id === userId);
+      const userSummary = {
+        ...profile,
+        hasPin: Boolean(profile.pinCode && profile.pinCode.trim().length > 0)
+      };
+      if (existingIdx >= 0) {
+        users[existingIdx] = { ...users[existingIdx], ...userSummary };
+      } else {
+        users.push(userSummary);
+      }
+      localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(users));
     }
     if (Array.isArray(logs) && logs.length > 0) {
       localStorage.setItem(`fittrainer_workout_logs_${userId}`, JSON.stringify(logs));

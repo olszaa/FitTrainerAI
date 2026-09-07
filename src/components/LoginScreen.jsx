@@ -132,7 +132,11 @@ export default function LoginScreen({
     const searchName = directUsername.trim().toLowerCase();
     const allUsers = cloudUsers || usersList;
     const match = allUsers.find(
-      (u) => u.name && u.name.trim().toLowerCase() === searchName
+      (u) =>
+        (u.username && u.username.trim().toLowerCase() === searchName) ||
+        (u.name && u.name.trim().toLowerCase() === searchName) ||
+        (u.email && u.email.trim().toLowerCase() === searchName) ||
+        (u.id && u.id.trim().toLowerCase() === searchName)
     );
 
     if (!match) {
