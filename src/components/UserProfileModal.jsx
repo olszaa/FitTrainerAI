@@ -185,7 +185,7 @@ export default function UserProfileModal({
   // Sync profile video seek position to BMI (range 10.0 to 60.0)
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || !videoLoaded || isPlayingMorph) return;
+    if (!video || isPlayingMorph) return;
 
     const clampedBmi = Math.max(10, Math.min(60, bmi));
     const duration = video.duration || 6.042;
@@ -203,7 +203,7 @@ export default function UserProfileModal({
   // Sync new user creation video seek position
   useEffect(() => {
     const video = newUserVideoRef.current;
-    if (!video || !newUserVideoLoaded || !isCreatingUser) return;
+    if (!video || !isCreatingUser) return;
 
     const clampedBmi = Math.max(10, Math.min(60, newUserBmi));
     const duration = video.duration || 6.042;
@@ -1306,6 +1306,13 @@ export default function UserProfileModal({
 
                   {/* 3D Mannequin Video Visualizer Preview for New Member */}
                   <div className="relative rounded-2xl overflow-hidden bg-black/95 border border-amber-500/40 flex items-center justify-center shadow-inner my-2 h-[220px] sm:h-[250px] w-full">
+                    {/* Background Fallback Image */}
+                    <img
+                      src="/muscle_heatmap_3d.jpg"
+                      alt="3D Mannequin Fallback"
+                      className="absolute inset-0 w-full h-full object-cover opacity-25 pointer-events-none"
+                    />
+
                     {/* HUD Watermark */}
                     <div className="absolute top-2.5 left-2.5 z-20 flex items-center space-x-1.5 text-[9px] font-black tracking-widest text-amber-400 bg-slate-950/80 px-2 py-0.5 rounded-lg border border-amber-500/30 backdrop-blur-sm pointer-events-none">
                       <Sparkles className="w-3 h-3 animate-spin text-amber-400" />
@@ -1322,21 +1329,29 @@ export default function UserProfileModal({
 
                     <video
                       ref={newUserVideoRef}
-                      key={newUserVideoSrc}
+                      key={`${newUserVideoSrc}-${newUserBmi}`}
                       src={newUserVideoSrc}
                       preload="auto"
                       playsInline
                       muted
-                      onLoadedMetadata={() => {
+                      onLoadedMetadata={(e) => {
                         setNewUserVideoLoaded(true);
-                        if (newUserVideoRef.current) {
-                          const duration = newUserVideoRef.current.duration || 6.042;
-                          const clampedBmi = Math.max(10, Math.min(60, newUserBmi));
-                          const progress = (clampedBmi - 10) / 50;
-                          newUserVideoRef.current.currentTime = Math.max(0.01, progress * duration);
-                        }
+                        const duration = e.target.duration || 6.042;
+                        const clampedBmi = Math.max(10, Math.min(60, newUserBmi));
+                        const progress = (clampedBmi - 10) / 50;
+                        try {
+                          e.target.currentTime = Math.max(0.01, progress * duration);
+                        } catch (err) {}
                       }}
-                      className="w-full h-full object-cover object-center scale-[1.12]"
+                      onLoadedData={(e) => {
+                        const duration = e.target.duration || 6.042;
+                        const clampedBmi = Math.max(10, Math.min(60, newUserBmi));
+                        const progress = (clampedBmi - 10) / 50;
+                        try {
+                          e.target.currentTime = Math.max(0.01, progress * duration);
+                        } catch (err) {}
+                      }}
+                      className="w-full h-full object-cover object-center scale-[1.12] relative z-10"
                     />
                   </div>
 
