@@ -3,7 +3,12 @@ import {
   syncProfileToSupabase,
   syncWorkoutLogToSupabase,
   syncCustomPlanToSupabase,
-  syncCustomExerciseToSupabase
+  syncCustomExerciseToSupabase,
+  fetchAllProfilesFromSupabase,
+  fetchProfileFromSupabase,
+  fetchWorkoutLogsFromSupabase,
+  fetchCustomPlansFromSupabase,
+  fetchCustomExercisesFromSupabase
 } from '../services/supabaseService';
 
 const STORAGE_KEY_USERS = 'fittrainer_users_list';
@@ -208,7 +213,73 @@ export const createNewUser = (userData) => {
   localStorage.setItem(`fittrainer_custom_plans_${newId}`, JSON.stringify([]));
   localStorage.setItem(STORAGE_KEY_ACTIVE_USER, newId);
 
+  // Auto-sync new user profile immediately to Supabase Cloud
+  syncProfileToSupabase(newUser);
+
   return { newUser, updatedUsers };
+};
+
+// Sync all registered profiles from Supabase Cloud to local device
+export const syncCloudProfilesToLocal = async () => {
+  try {
+    const cloudProfiles = await fetchAllProfilesFromSupabase();
+    if (!cloudProfiles || !cloudProfiles.length) return getUsersList();
+
+    const localUsers = getUsersList();
+    const userMap = new Map();
+
+    localUsers.forEach((u) => userMap.set(u.id, u));
+
+    cloudProfiles.forEach((cp) => {
+      userMap.set(cp.id, {
+        ...userMap.get(cp.id),
+        ...cp,
+        hasPin: Boolean(cp.pinCode && String(cp.pinCode).trim().length === 4)
+      });
+      const profileKey = `fittrainer_user_profile_${cp.id}`;
+      if (!localStorage.getItem(profileKey)) {
+        localStorage.setItem(profileKey, JSON.stringify(cp));
+      }
+    });
+
+    const mergedUsers = Array.from(userMap.values());
+    localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(mergedUsers));
+    return mergedUsers;
+  } catch (e) {
+    console.warn('syncCloudProfilesToLocal error:', e);
+    return getUsersList();
+  }
+};
+
+// Pull down user logs, plans, and custom exercises from Supabase to local device
+export const syncUserDataFromCloudToLocal = async (userId) => {
+  if (!userId) return;
+  try {
+    const [profile, logs, plans, customExs] = await Promise.all([
+      fetchProfileFromSupabase(userId),
+      fetchWorkoutLogsFromSupabase(userId),
+      fetchCustomPlansFromSupabase(userId),
+      fetchCustomExercisesFromSupabase(userId)
+    ]);
+
+    if (profile) {
+      localStorage.setItem(`fittrainer_user_profile_${userId}`, JSON.stringify(profile));
+    }
+    if (Array.isArray(logs) && logs.length > 0) {
+      localStorage.setItem(`fittrainer_workout_logs_${userId}`, JSON.stringify(logs));
+    }
+    if (Array.isArray(plans) && plans.length > 0) {
+      localStorage.setItem(`fittrainer_custom_plans_${userId}`, JSON.stringify(plans));
+    }
+    if (Array.isArray(customExs) && customExs.length > 0) {
+      localStorage.setItem(`fittrainer_custom_exercises_${userId}`, JSON.stringify(customExs));
+    }
+
+    return { profile, logs, plans, customExs };
+  } catch (e) {
+    console.warn('syncUserDataFromCloudToLocal error:', e);
+    return null;
+  }
 };
 
 export const deleteUser = (userId) => {

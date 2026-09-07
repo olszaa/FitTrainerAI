@@ -18,7 +18,9 @@ import {
   getUserProfile,
   verifyUserPin,
   getUserRank,
-  createNewUser
+  createNewUser,
+  syncCloudProfilesToLocal,
+  syncUserDataFromCloudToLocal
 } from '../utils/storage';
 import {
   calculateBMI,
@@ -30,12 +32,32 @@ const AVATAR_OPTIONS = ['🏋️‍♂️', '🏃‍♀️', '🥊', '⚡', '�
 export default function LoginScreen({
   usersList = [],
   onLoginSuccess,
-  onCreateUser
+  onCreateUser,
+  onRefreshUsers
 }) {
   const [view, setView] = useState('SELECT_ACCOUNT'); // 'SELECT_ACCOUNT' | 'ENTER_PIN' | 'REGISTER'
   const [selectedUser, setSelectedUser] = useState(null);
   const [pinInput, setPinInput] = useState('');
   const [pinError, setPinError] = useState('');
+  const [isCloudSyncing, setIsCloudSyncing] = useState(false);
+  const [syncStatusMsg, setSyncStatusMsg] = useState('');
+
+  // Fetch Cloud Profiles on mount
+  useEffect(() => {
+    let isMounted = true;
+    const fetchCloud = async () => {
+      setIsCloudSyncing(true);
+      setSyncStatusMsg('☁️กำลังเชื่อมต่อบัญชี Cloud Sync...');
+      await syncCloudProfilesToLocal();
+      if (isMounted) {
+        if (onRefreshUsers) onRefreshUsers();
+        setIsCloudSyncing(false);
+        setSyncStatusMsg('');
+      }
+    };
+    fetchCloud();
+    return () => { isMounted = false; };
+  }, []);
 
   // Registration Form State
   const [registerForm, setRegisterForm] = useState({
@@ -74,7 +96,16 @@ export default function LoginScreen({
     }
   }, [registerBmi, registerForm.gender, view]);
 
-  const handleSelectUser = (user) => {
+  const processLogin = async (userId) => {
+    setIsCloudSyncing(true);
+    setSyncStatusMsg('☁️ กำลังซิงค์ข้อมูลจาก Cloud...');
+    await syncUserDataFromCloudToLocal(userId);
+    setIsCloudSyncing(false);
+    setSyncStatusMsg('');
+    onLoginSuccess(userId);
+  };
+
+  const handleSelectUser = async (user) => {
     setSelectedUser(user);
     const profile = getUserProfile(user.id);
     if (profile.pinCode && profile.pinCode.trim().length === 4) {
@@ -84,30 +115,30 @@ export default function LoginScreen({
       setView('ENTER_PIN');
     } else {
       // No PIN code -> Direct login!
-      onLoginSuccess(user.id);
+      await processLogin(user.id);
     }
   };
 
-  const handlePinSubmit = (e) => {
+  const handlePinSubmit = async (e) => {
     if (e) e.preventDefault();
     if (!selectedUser) return;
 
     if (verifyUserPin(selectedUser.id, pinInput)) {
-      onLoginSuccess(selectedUser.id);
+      await processLogin(selectedUser.id);
     } else {
       setPinError('รหัส PIN ไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง');
       setPinInput('');
     }
   };
 
-  const handleNumpadClick = (num) => {
+  const handleNumpadClick = async (num) => {
     if (pinInput.length < 4) {
       const nextPin = pinInput + num;
       setPinInput(nextPin);
       setPinError('');
       if (nextPin.length === 4) {
         if (verifyUserPin(selectedUser.id, nextPin)) {
-          onLoginSuccess(selectedUser.id);
+          await processLogin(selectedUser.id);
         } else {
           setPinError('รหัส PIN ไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง');
           setTimeout(() => setPinInput(''), 400);
@@ -121,12 +152,17 @@ export default function LoginScreen({
     setPinError('');
   };
 
-  const handleRegisterSubmit = (e) => {
+  const handleRegisterSubmit = async (e) => {
     e.preventDefault();
     if (!registerForm.name.trim()) return;
 
+    setIsCloudSyncing(true);
+    setSyncStatusMsg('✨ กำลังสร้างบัญชีและซิงค์ข้อมูลไปยัง Cloud...');
     const { newUser } = createNewUser(registerForm);
     if (onCreateUser) onCreateUser(registerForm);
+    await syncUserDataFromCloudToLocal(newUser.id);
+    setIsCloudSyncing(false);
+    setSyncStatusMsg('');
     onLoginSuccess(newUser.id);
   };
 
@@ -179,11 +215,15 @@ export default function LoginScreen({
         {view === 'SELECT_ACCOUNT' && (
           <div className="space-y-6">
             <div className="text-center space-y-2">
+              <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs font-bold mb-1">
+                <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
+                <span>🌐 Cloud Sync — สมัครสมาชิกแล้วล็อกอินได้จากทุกเครื่อง</span>
+              </div>
               <h2 className="text-2xl sm:text-3xl font-black text-white">
                 ยินดีต้อนรับกลับมา 👋
               </h2>
               <p className="text-xs sm:text-sm text-slate-400 max-w-md mx-auto">
-                เลือกโปรไฟล์ผู้ใช้งานของคุณเพื่อเข้าสู่ระบบ บันทึกซ้อม และจัดการตารางฝึก
+                เลือกโปรไฟล์ผู้ใช้งานของคุณเพื่อเข้าสู่ระบบ ซิงค์ข้อมูลข้ามเครื่องอัตโนมัติ
               </p>
             </div>
 

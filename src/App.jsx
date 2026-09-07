@@ -23,7 +23,9 @@ import {
   verifyUserPin,
   getAuthSession,
   setAuthSession,
-  clearAuthSession
+  clearAuthSession,
+  syncCloudProfilesToLocal,
+  syncUserDataFromCloudToLocal
 } from './utils/storage';
 
 export default function App() {
@@ -45,6 +47,27 @@ export default function App() {
   const [userProfile, setUserProfile] = useState(() => getUserProfile(activeUserId));
   const [workoutLogs, setWorkoutLogs] = useState(() => getWorkoutLogs(activeUserId));
 
+  // Sync cloud profiles on app mount so all registered accounts are available across devices
+  useEffect(() => {
+    const fetchCloudProfiles = async () => {
+      const mergedUsers = await syncCloudProfilesToLocal();
+      if (mergedUsers) {
+        setUsersList(mergedUsers);
+      }
+    };
+    fetchCloudProfiles();
+  }, []);
+
+  // Sync user profile & logs from cloud whenever active user is loaded
+  useEffect(() => {
+    if (isAuthenticated && activeUserId) {
+      syncUserDataFromCloudToLocal(activeUserId).then(() => {
+        setUserProfile(getUserProfile(activeUserId));
+        setWorkoutLogs(getWorkoutLogs(activeUserId));
+      });
+    }
+  }, [activeUserId, isAuthenticated]);
+
   const [activeWorkout, setActiveWorkout] = useState(null);
   const [aiModalOpen, setAiModalOpen] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
@@ -60,18 +83,22 @@ export default function App() {
   const [pinError, setPinError] = useState('');
 
   // Core user switch execution
-  const doSwitchUser = (newUserId) => {
+  const doSwitchUser = async (newUserId) => {
     setActiveUserId(newUserId);
     setActiveUserIdState(newUserId);
     setUserProfile(getUserProfile(newUserId));
     setWorkoutLogs(getWorkoutLogs(newUserId));
     setActiveWorkout(null);
     setActiveTab('body');
+
+    await syncUserDataFromCloudToLocal(newUserId);
+    setUserProfile(getUserProfile(newUserId));
+    setWorkoutLogs(getWorkoutLogs(newUserId));
   };
 
-  const handleLoginSuccess = (userId) => {
+  const handleLoginSuccess = async (userId) => {
     setAuthSession(userId);
-    doSwitchUser(userId);
+    await doSwitchUser(userId);
     setIsAuthenticated(true);
     setActiveTab('body');
   };
@@ -156,6 +183,7 @@ export default function App() {
         usersList={usersList}
         onLoginSuccess={handleLoginSuccess}
         onCreateUser={handleCreateUser}
+        onRefreshUsers={() => setUsersList(getUsersList())}
       />
     );
   }

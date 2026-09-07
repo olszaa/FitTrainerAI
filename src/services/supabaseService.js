@@ -93,6 +93,41 @@ export const fetchProfileFromSupabase = async (userId) => {
   }
 };
 
+export const fetchAllProfilesFromSupabase = async () => {
+  if (!isSupabaseConfigured()) return [];
+  const client = getSupabaseClient();
+  if (!client) return [];
+
+  try {
+    const { data, error } = await client.from('profiles').select('*').order('created_at', { ascending: false });
+    if (error || !data) return [];
+
+    return data.map((d) => ({
+      id: d.id,
+      name: d.name,
+      avatar: d.avatar || '🏋️‍♂️',
+      customAvatarUrl: d.custom_avatar_url,
+      gender: d.gender,
+      age: d.age,
+      weightKg: d.weight_kg,
+      targetWeightKg: d.target_weight_kg,
+      heightCm: d.height_cm,
+      goal: d.goal,
+      gymLevel: d.gym_level,
+      targetDaysPerWeek: d.target_days_per_week,
+      streakDays: d.streak_days,
+      pinCode: d.pin_code,
+      motto: d.motto,
+      favoriteMuscle: d.favorite_muscle,
+      weightHistory: d.weight_history || [],
+      hasPin: Boolean(d.pin_code && String(d.pin_code).trim().length === 4)
+    }));
+  } catch (e) {
+    console.warn('Fetch all profiles from Supabase error:', e);
+    return [];
+  }
+};
+
 // --- Workout Logs Cloud Sync ---
 export const syncWorkoutLogToSupabase = async (log, userId) => {
   if (!isSupabaseConfigured() || !log?.id) return null;
