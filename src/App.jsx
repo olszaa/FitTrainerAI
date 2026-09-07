@@ -9,6 +9,7 @@ import AnalyticsDashboard from './components/AnalyticsDashboard';
 import AITrainerModal from './components/AITrainerModal';
 import UserProfileModal from './components/UserProfileModal';
 import BodyAndMuscles from './components/BodyAndMuscles';
+import LoginScreen from './components/LoginScreen';
 import {
   getUsersList,
   getActiveUserId,
@@ -18,17 +19,31 @@ import {
   getWorkoutLogs,
   saveWorkoutLog,
   getUserProfile,
-  saveUserProfile
+  saveUserProfile,
+  verifyUserPin,
+  getAuthSession,
+  setAuthSession,
+  clearAuthSession
 } from './utils/storage';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('gym'); // 'gym' | 'home' | 'plans' | 'heatmap' | 'library' | 'analytics'
   
+  // Auth & Session State
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    const session = getAuthSession();
+    return Boolean(session && session.userId);
+  });
+
   // Multi-user state
-  const [activeUserId, setActiveUserIdState] = useState(() => getActiveUserId());
+  const [activeUserId, setActiveUserIdState] = useState(() => {
+    const session = getAuthSession();
+    return session?.userId || getActiveUserId();
+  });
+
   const [usersList, setUsersList] = useState(() => getUsersList());
-  const [userProfile, setUserProfile] = useState(() => getUserProfile(getActiveUserId()));
-  const [workoutLogs, setWorkoutLogs] = useState(() => getWorkoutLogs(getActiveUserId()));
+  const [userProfile, setUserProfile] = useState(() => getUserProfile(activeUserId));
+  const [workoutLogs, setWorkoutLogs] = useState(() => getWorkoutLogs(activeUserId));
 
   const [activeWorkout, setActiveWorkout] = useState(null);
   const [aiModalOpen, setAiModalOpen] = useState(false);
@@ -38,26 +53,73 @@ export default function App() {
   const [templateToOpen, setTemplateToOpen] = useState(null);
   const [bodySubTab, setBodySubTab] = useState('PROFILE');
 
-  // Sync user data whenever activeUserId changes
-  const handleSwitchUser = (newUserId) => {
+  // PIN Verification Modal state for switching users
+  const [pendingPinUserId, setPendingPinUserId] = useState(null);
+  const [pinPromptOpen, setPinPromptOpen] = useState(false);
+  const [pinInput, setPinInput] = useState('');
+  const [pinError, setPinError] = useState('');
+
+  // Core user switch execution
+  const doSwitchUser = (newUserId) => {
     setActiveUserId(newUserId);
     setActiveUserIdState(newUserId);
     setUserProfile(getUserProfile(newUserId));
     setWorkoutLogs(getWorkoutLogs(newUserId));
-    setActiveWorkout(null); // Clear active session of previous user
+    setActiveWorkout(null);
+  };
+
+  const handleLoginSuccess = (userId) => {
+    setAuthSession(userId);
+    doSwitchUser(userId);
+    setIsAuthenticated(true);
+  };
+
+  const handleLogout = () => {
+    clearAuthSession();
+    setIsAuthenticated(false);
+  };
+
+  // Intercept switch attempt for PIN verification
+  const handleSwitchUser = (newUserId) => {
+    if (newUserId === activeUserId) return;
+
+    if (!verifyUserPin(newUserId, null)) {
+      // User has PIN enabled -> ask for PIN
+      setPendingPinUserId(newUserId);
+      setPinInput('');
+      setPinError('');
+      setPinPromptOpen(true);
+    } else {
+      setAuthSession(newUserId);
+      doSwitchUser(newUserId);
+    }
+  };
+
+  const handleVerifyPinSubmit = (e) => {
+    if (e) e.preventDefault();
+    if (verifyUserPin(pendingPinUserId, pinInput)) {
+      setAuthSession(pendingPinUserId);
+      doSwitchUser(pendingPinUserId);
+      setPinPromptOpen(false);
+      setPendingPinUserId(null);
+    } else {
+      setPinError('รหัส PIN ไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง');
+    }
   };
 
   const handleCreateUser = (userData) => {
     const { newUser, updatedUsers } = createNewUser(userData);
     setUsersList(updatedUsers);
-    handleSwitchUser(newUser.id);
+    setAuthSession(newUser.id);
+    doSwitchUser(newUser.id);
   };
 
   const handleDeleteUser = (userIdToDelete) => {
     try {
       const { activeId, updatedUsers } = deleteUser(userIdToDelete);
       setUsersList(updatedUsers);
-      handleSwitchUser(activeId);
+      setAuthSession(activeId);
+      doSwitchUser(activeId);
     } catch (e) {
       alert(e.message || 'ไม่สามารถลบผู้ใช้งานได้');
     }
@@ -85,6 +147,17 @@ export default function App() {
     setActiveTab('body');
   };
 
+  // If not authenticated, display full Login Screen
+  if (!isAuthenticated) {
+    return (
+      <LoginScreen
+        usersList={usersList}
+        onLoginSuccess={handleLoginSuccess}
+        onCreateUser={handleCreateUser}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#0b0d12] text-slate-100 flex flex-col font-sans selection:bg-cyan-500 selection:text-slate-950">
       {/* Top Navbar Header */}
@@ -98,6 +171,7 @@ export default function App() {
         usersList={usersList}
         activeUserId={activeUserId}
         onSwitchUser={handleSwitchUser}
+        onLogout={handleLogout}
         streakDays={userProfile.streakDays || 4}
       />
 
@@ -173,6 +247,61 @@ export default function App() {
           handleStartWorkoutPlan(plan);
         }}
       />
+
+      {/* PIN Security Verification Modal for Account Switching */}
+      {pinPromptOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md animate-fade-in">
+          <div className="w-full max-w-sm bg-[#131722] border border-purple-500/40 rounded-3xl p-6 shadow-2xl space-y-4 text-center">
+            <div className="w-14 h-14 rounded-2xl bg-purple-500/20 text-purple-300 border border-purple-500/30 flex items-center justify-center mx-auto text-2xl shadow-lg">
+              🔒
+            </div>
+            <div>
+              <h3 className="text-base font-black text-white">ยืนยันรหัส PIN ผู้ใช้งาน</h3>
+              <p className="text-xs text-slate-400 mt-1">
+                บัญชีของ <strong className="text-cyan-300">{getUserProfile(pendingPinUserId)?.name}</strong> เปิดการปกป้องด้วยรหัสผ่าน PIN ไว้
+              </p>
+            </div>
+
+            <form onSubmit={handleVerifyPinSubmit} className="space-y-3">
+              <input
+                type="password"
+                maxLength={4}
+                autoFocus
+                placeholder="ป้อน PIN 4 หลัก..."
+                value={pinInput}
+                onChange={(e) => {
+                  setPinInput(e.target.value.replace(/\D/g, ''));
+                  setPinError('');
+                }}
+                className="w-full bg-slate-900 border border-slate-700 text-center font-mono font-black text-purple-300 tracking-widest text-2xl rounded-2xl py-3 outline-none focus:border-purple-400"
+              />
+
+              {pinError && (
+                <div className="text-xs text-red-400 font-bold bg-red-500/10 p-2 rounded-xl border border-red-500/20">
+                  {pinError}
+                </div>
+              )}
+
+              <div className="flex items-center space-x-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setPinPromptOpen(false)}
+                  className="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs"
+                >
+                  ยกเลิก
+                </button>
+                <button
+                  type="submit"
+                  disabled={pinInput.length !== 4}
+                  className="flex-1 py-2.5 rounded-xl bg-purple-500 hover:bg-purple-400 text-white font-black text-xs shadow-lg shadow-purple-500/20 disabled:opacity-40"
+                >
+                  ปลดล็อก
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Footer */}
       <footer className="border-t border-slate-800/80 py-6 text-center text-xs text-slate-400 bg-[#090b0e]">

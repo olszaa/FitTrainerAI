@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 import { WORKOUT_TEMPLATES } from '../data/workoutTemplates';
 import { EXERCISE_DATABASE, EXERCISE_IMAGE_MAP } from '../data/exerciseDatabase';
-import { saveCustomPlan, getCustomPlans, deleteCustomPlan } from '../utils/storage';
+import { saveCustomPlan, getCustomPlans, deleteCustomPlan, getAllExercises } from '../utils/storage';
 import { isCardioExercise } from './GymLogger';
 
 export default function PlanBuilder({ onStartWorkoutPlan }) {
@@ -299,7 +299,7 @@ export default function PlanBuilder({ onStartWorkoutPlan }) {
         </div>
 
         {/* Search Input */}
-        <div className="relative min-w-[200px] sm:w-64">
+        <div className="relative w-full sm:w-64">
           <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
@@ -556,7 +556,7 @@ export default function PlanBuilder({ onStartWorkoutPlan }) {
                 ) : (
                   <div className="space-y-2.5">
                     {editingPlan.exercises.map((ex, idx) => {
-                      const fullInfo = EXERCISE_DATABASE.find(
+                      const fullInfo = getAllExercises().find(
                         (e) => e.id === ex.exerciseId || e.id === ex.exerciseId?.replace('-cardio', '')
                       ) || {};
                       const isCardio = isCardioExercise({ category: fullInfo.category, exerciseId: ex.exerciseId });
@@ -830,7 +830,7 @@ export default function PlanBuilder({ onStartWorkoutPlan }) {
 
             {/* Exercise List */}
             <div className="flex-1 overflow-y-auto space-y-1.5 pr-1 max-h-72">
-              {EXERCISE_DATABASE.filter((ex) => {
+              {getAllExercises().filter((ex) => {
                 if (exerciseCategoryFilter !== 'ALL' && ex.category !== exerciseCategoryFilter) return false;
                 if (exerciseSearch.trim()) {
                   const q = exerciseSearch.toLowerCase();

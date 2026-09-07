@@ -13,7 +13,9 @@ import {
   ChevronDown,
   Check,
   Plus,
-  Settings
+  Settings,
+  Lock,
+  LogOut
 } from 'lucide-react';
 
 export default function Navbar({
@@ -26,6 +28,7 @@ export default function Navbar({
   usersList = [],
   activeUserId,
   onSwitchUser,
+  onLogout,
   streakDays = 4
 }) {
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
@@ -41,22 +44,22 @@ export default function Navbar({
   return (
     <>
       {/* Top Navbar Header */}
-      <header className="sticky top-0 z-40 bg-[#0c0e13]/90 backdrop-blur-md border-b border-slate-800/80 px-3 sm:px-4 py-2.5 sm:py-3 shadow-lg">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
+      <header className="sticky top-0 z-40 bg-[#0c0e13]/90 backdrop-blur-md border-b border-slate-800/80 px-2 sm:px-4 py-2 sm:py-3 shadow-lg">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-1.5 sm:gap-4 min-w-0">
           
           {/* Brand Logo */}
-          <div className="flex items-center space-x-2.5 cursor-pointer" onClick={() => setActiveTab('gym')}>
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-lime-400 p-[2px] shadow-lg shadow-cyan-500/20">
+          <div className="flex items-center space-x-1.5 sm:space-x-2.5 cursor-pointer shrink-0" onClick={() => setActiveTab('gym')}>
+            <div className="w-7 h-7 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-lime-400 p-[2px] shadow-lg shadow-cyan-500/20 shrink-0">
               <div className="w-full h-full bg-[#0b0d12] rounded-[10px] flex items-center justify-center">
-                <Dumbbell className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-400 transform -rotate-12" />
+                <Dumbbell className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-cyan-400 transform -rotate-12" />
               </div>
             </div>
-            <div>
-              <div className="flex items-center space-x-1.5">
-                <h1 className="font-extrabold text-base sm:text-lg tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-transparent">
+            <div className="min-w-0">
+              <div className="flex items-center space-x-1 sm:space-x-1.5">
+                <h1 className="font-extrabold text-xs xs:text-sm sm:text-lg tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-transparent">
                   FitTrainer <span className="text-cyan-400">AI</span>
                 </h1>
-                <span className="text-[9px] sm:text-[10px] font-bold px-1.5 py-0.2 rounded bg-lime-400/20 text-lime-400 border border-lime-400/30">
+                <span className="text-[8px] sm:text-[10px] font-bold px-1 sm:px-1.5 py-0.2 rounded bg-lime-400/20 text-lime-400 border border-lime-400/30 shrink-0">
                   PRO
                 </span>
               </div>
@@ -99,35 +102,35 @@ export default function Navbar({
           </nav>
 
           {/* Right Controls: Active Session, Multi-User Switcher, Streak & AI Coach */}
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-1 sm:space-x-2 shrink-0">
             {/* Active Session Indicator Button */}
             {activeWorkout && (
               <button
                 type="button"
                 onClick={() => setActiveTab('gym')}
-                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/50 text-rose-300 text-xs font-bold animate-pulse hover:scale-105 active:scale-95 transition-all shadow-lg shadow-rose-500/25 cursor-pointer"
+                className="flex items-center space-x-1 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/50 text-rose-300 text-xs font-bold animate-pulse hover:scale-105 active:scale-95 transition-all shadow-lg shadow-rose-500/25 cursor-pointer shrink-0"
                 title="แตะเพื่อกลับไปยังการออกกำลังกายที่กำลังบันทึก"
               >
-                <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping" />
-                <span className="font-black text-[11px] sm:text-xs tracking-tight">กำลังบันทึก</span>
+                <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
+                <span className="font-black text-[10px] sm:text-xs tracking-tight">กำลังบันทึก</span>
                 <span className="text-[10px] text-rose-400 hidden sm:inline">(แตะเพื่อกลับไป)</span>
               </button>
             )}
 
             {/* Multi-User Switcher & Profile Button */}
-            <div className="relative">
+            <div className="relative shrink-0">
               <button
                 onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                className="flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 text-slate-200 text-xs font-bold transition-all shadow-sm hover:border-cyan-500/50 active:scale-95 group"
+                className="flex items-center space-x-1 px-1.5 sm:px-3 py-1 sm:py-2 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 text-slate-200 text-xs font-bold transition-all shadow-sm hover:border-cyan-500/50 active:scale-95 group"
                 title="สลับผู้ใช้งาน & จัดการโปรไฟล์"
               >
-                <div className="w-6 h-6 rounded-lg bg-slate-950 border border-cyan-500/40 flex items-center justify-center text-sm shrink-0 shadow-inner">
+                <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-lg bg-slate-950 border border-cyan-500/40 flex items-center justify-center text-xs shrink-0 shadow-inner">
                   <span>{userProfile?.avatar || '🏋️‍♂️'}</span>
                 </div>
-                <span className="font-extrabold truncate max-w-[70px] sm:max-w-[100px] text-white">
+                <span className="font-extrabold truncate max-w-[45px] sm:max-w-[100px] text-white text-[11px] sm:text-xs">
                   {userProfile?.name?.split(' ')[0] || 'โปรไฟล์'}
                 </span>
-                <ChevronDown className="w-3.5 h-3.5 text-slate-400 group-hover:text-cyan-300 transition-transform" />
+                <ChevronDown className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-slate-400 group-hover:text-cyan-300 transition-transform shrink-0" />
               </button>
 
               {/* User Switcher Dropdown */}
@@ -168,6 +171,9 @@ export default function Navbar({
                             <div className="flex items-center space-x-2 min-w-0">
                               <span className="text-base">{usr.avatar || '🏋️‍♂️'}</span>
                               <span className="truncate">{usr.name}</span>
+                              {usr.hasPin && (
+                                <Lock className="w-3 h-3 text-purple-400 shrink-0" title="มีรหัส PIN ล็อกไว้" />
+                              )}
                             </div>
                             {isActive && <Check className="w-3.5 h-3.5 text-cyan-400 shrink-0" />}
                           </div>
@@ -198,6 +204,19 @@ export default function Navbar({
                         <Settings className="w-3.5 h-3.5 text-cyan-400" />
                         <span>⚙️ ข้อมูลสรีระ & สุขภาพ</span>
                       </button>
+
+                      {onLogout && (
+                        <button
+                          onClick={() => {
+                            setUserDropdownOpen(false);
+                            onLogout();
+                          }}
+                          className="w-full py-1.5 px-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 transition-all flex items-center justify-center space-x-1.5"
+                        >
+                          <LogOut className="w-3.5 h-3.5" />
+                          <span>🚪 ออกจากระบบ (Logout)</span>
+                        </button>
+                      )}
                     </div>
                   </div>
                 </>
@@ -205,18 +224,19 @@ export default function Navbar({
             </div>
 
             {/* Workout Streak Counter */}
-            <div className="flex items-center space-x-1 px-2.5 py-1.5 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-400 text-xs font-bold" title="ออกกำลังกายต่อเนื่อง">
-              <Flame className="w-3.5 h-3.5 text-orange-400 fill-orange-500/20" />
-              <span>{streakDays} ว.</span>
+            <div className="flex items-center space-x-0.5 sm:space-x-1 px-1.5 sm:px-2.5 py-1 sm:py-1.5 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-400 text-[11px] sm:text-xs font-bold shrink-0" title="ออกกำลังกายต่อเนื่อง">
+              <Flame className="w-3.5 h-3.5 text-orange-400 fill-orange-500/20 shrink-0" />
+              <span>{streakDays}<span className="hidden sm:inline"> ว.</span></span>
             </div>
 
             {/* AI Personal Trainer Button */}
             <button
               onClick={onOpenAIChat}
-              className="flex items-center space-x-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-lime-400 text-slate-950 font-bold text-xs shadow-lg shadow-cyan-500/20 hover:brightness-110 active:scale-95 transition-all"
+              className="flex items-center space-x-1 sm:space-x-1.5 px-2 sm:px-3.5 py-1 sm:py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-lime-400 text-slate-950 font-bold text-xs shadow-lg shadow-cyan-500/20 hover:brightness-110 active:scale-95 transition-all shrink-0"
             >
-              <Bot className="w-4 h-4 animate-bounce" />
-              <span>โค้ช AI</span>
+              <Bot className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-bounce shrink-0" />
+              <span className="hidden sm:inline">โค้ช AI</span>
+              <span className="inline sm:hidden font-extrabold text-[10px]">AI</span>
             </button>
           </div>
         </div>

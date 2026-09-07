@@ -1,3 +1,11 @@
+import { EXERCISE_DATABASE } from '../data/exerciseDatabase';
+import {
+  syncProfileToSupabase,
+  syncWorkoutLogToSupabase,
+  syncCustomPlanToSupabase,
+  syncCustomExerciseToSupabase
+} from '../services/supabaseService';
+
 const STORAGE_KEY_USERS = 'fittrainer_users_list';
 const STORAGE_KEY_ACTIVE_USER = 'fittrainer_active_user_id';
 const DEFAULT_USER_ID = 'user-1';
@@ -253,6 +261,7 @@ export const saveWorkoutLog = (newLog, userId = getActiveUserId()) => {
   const logs = getWorkoutLogs(userId);
   const updatedLogs = [newLog, ...logs];
   localStorage.setItem(key, JSON.stringify(updatedLogs));
+  syncWorkoutLogToSupabase(newLog, userId);
   return updatedLogs;
 };
 
@@ -279,6 +288,7 @@ export const saveCustomPlan = (plan, userId = getActiveUserId()) => {
     updated = [...plans, plan];
   }
   localStorage.setItem(key, JSON.stringify(updated));
+  syncCustomPlanToSupabase(plan, userId);
   return updated;
 };
 
@@ -322,6 +332,7 @@ export const saveUserProfile = (profile, userId = getActiveUserId()) => {
   const key = `fittrainer_user_profile_${userId}`;
   const profileToSave = { ...profile, id: userId };
   localStorage.setItem(key, JSON.stringify(profileToSave));
+  syncProfileToSupabase(profileToSave);
 
   // Sync users list summary so Navbar user switcher reflects updated name / avatar / weight
   const users = getUsersList();
@@ -335,6 +346,7 @@ export const saveUserProfile = (profile, userId = getActiveUserId()) => {
       targetWeightKg: profileToSave.targetWeightKg,
       goal: profileToSave.goal,
       streakDays: profileToSave.streakDays,
+      hasPin: Boolean(profileToSave.pinCode && profileToSave.pinCode.trim().length === 4),
     };
     localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(users));
   }
@@ -357,3 +369,260 @@ export const saveAIChatHistory = (messages, userId = getActiveUserId()) => {
   const key = `fittrainer_ai_chat_${userId}`;
   localStorage.setItem(key, JSON.stringify(messages));
 };
+
+// --- Custom Exercises Storage APIs ---
+export const getCustomExercises = (userId = getActiveUserId()) => {
+  const key = `fittrainer_custom_exercises_${userId}`;
+  const data = localStorage.getItem(key);
+  if (!data) return [];
+  try {
+    return JSON.parse(data);
+  } catch (e) {
+    return [];
+  }
+};
+
+export const saveCustomExercise = (exercise, userId = getActiveUserId()) => {
+  const key = `fittrainer_custom_exercises_${userId}`;
+  const customExercises = getCustomExercises(userId);
+  const existingIdx = customExercises.findIndex((ex) => ex.id === exercise.id);
+  let updated;
+  if (existingIdx >= 0) {
+    updated = [...customExercises];
+    updated[existingIdx] = exercise;
+  } else {
+    updated = [exercise, ...customExercises];
+  }
+  localStorage.setItem(key, JSON.stringify(updated));
+  syncCustomExerciseToSupabase(exercise, userId);
+  return updated;
+};
+
+export const deleteCustomExercise = (exerciseId, userId = getActiveUserId()) => {
+  const key = `fittrainer_custom_exercises_${userId}`;
+  const customExercises = getCustomExercises(userId);
+  const updated = customExercises.filter((ex) => ex.id !== exerciseId);
+  localStorage.setItem(key, JSON.stringify(updated));
+  return updated;
+};
+
+export const getAllExercises = (userId = getActiveUserId()) => {
+  const customExercises = getCustomExercises(userId);
+  return [...customExercises, ...EXERCISE_DATABASE];
+};
+
+// --- User PIN Verification ---
+export const verifyUserPin = (userId, inputPin) => {
+  const profile = getUserProfile(userId);
+  if (!profile.pinCode || !profile.pinCode.trim()) return true; // No PIN set
+  return profile.pinCode.trim() === (inputPin || '').trim();
+};
+
+// --- User Rank & Level Helper ---
+export const getUserRank = (userId = getActiveUserId()) => {
+  const logs = getWorkoutLogs(userId);
+  const totalWorkouts = logs.length;
+  let totalTonnage = 0;
+  logs.forEach((log) => {
+    totalTonnage += log.totalTonnageKg || 0;
+  });
+
+  if (totalWorkouts >= 50 || totalTonnage >= 50000) {
+    return { title: 'Titan Legend', icon: '🏆', level: 5, badgeBg: 'from-amber-400 to-yellow-500 text-slate-950' };
+  } else if (totalWorkouts >= 25 || totalTonnage >= 25000) {
+    return { title: 'Platinum Athlete', icon: '💎', level: 4, badgeBg: 'from-cyan-400 to-blue-500 text-slate-950' };
+  } else if (totalWorkouts >= 10 || totalTonnage >= 10000) {
+    return { title: 'Gold Muscle', icon: '🥇', level: 3, badgeBg: 'from-yellow-400 to-amber-500 text-slate-950' };
+  } else if (totalWorkouts >= 3 || totalTonnage >= 2000) {
+    return { title: 'Silver Lifter', icon: '🥈', level: 2, badgeBg: 'from-slate-300 to-slate-400 text-slate-950' };
+  }
+  return { title: 'Beginner Rookie', icon: '🌱', level: 1, badgeBg: 'from-lime-400 to-emerald-500 text-slate-950' };
+};
+
+// --- User Achievement Badges Calculation ---
+export const getUserAchievements = (userId = getActiveUserId()) => {
+  const logs = getWorkoutLogs(userId);
+  const profile = getUserProfile(userId);
+  const customPlans = getCustomPlans(userId);
+  const customExercises = getCustomExercises(userId);
+
+  const totalWorkouts = logs.length;
+  let totalTonnage = 0;
+  let totalMinutes = 0;
+  logs.forEach((log) => {
+    totalTonnage += log.totalTonnageKg || 0;
+    totalMinutes += log.durationMinutes || 0;
+  });
+
+  const streakDays = profile.streakDays || 0;
+
+  return [
+    {
+      id: 'first_step',
+      title: 'ก้าวแรกสู่นักกีฬา (First Step)',
+      description: 'บันทึกการออกกำลังกายครั้งแรกเสร็จสิ้น',
+      icon: '🚀',
+      unlocked: totalWorkouts >= 1,
+      progress: Math.min(100, (totalWorkouts / 1) * 100)
+    },
+    {
+      id: 'streak_3',
+      title: 'วินัยเริ่มก่อตัว (3-Day Streak)',
+      description: 'ออกกำลังกายต่อเนื่อง 3 วัน',
+      icon: '🔥',
+      unlocked: streakDays >= 3,
+      progress: Math.min(100, (streakDays / 3) * 100)
+    },
+    {
+      id: 'streak_7',
+      title: 'ไฟแห่งความมุ่งมั่น (7-Day Streak)',
+      description: 'ออกกำลังกายต่อเนื่องครบ 7 วัน',
+      icon: '⚡',
+      unlocked: streakDays >= 7,
+      progress: Math.min(100, (streakDays / 7) * 100)
+    },
+    {
+      id: 'heavy_lifter',
+      title: 'นักยกพละกำลัง (Heavy Lifter)',
+      description: 'ยกน้ำหนักรวมสะสมทะลุ 5,000 kg',
+      icon: '🏋️‍♂️',
+      unlocked: totalTonnage >= 5000,
+      progress: Math.min(100, (totalTonnage / 5000) * 100)
+    },
+    {
+      id: 'titan_lifter',
+      title: 'ไททันพลังมหาศาล (Titan Lifter)',
+      description: 'ยกน้ำหนักรวมสะสมทะลุ 25,000 kg',
+      icon: '👑',
+      unlocked: totalTonnage >= 25000,
+      progress: Math.min(100, (totalTonnage / 25000) * 100)
+    },
+    {
+      id: 'time_crusher',
+      title: 'ชั่วโมงบินทรงคุณค่า (Time Crusher)',
+      description: 'ซ้อมสะสมรวมกันมากกว่า 300 นาที (5 ชั่วโมง)',
+      icon: '⏱️',
+      unlocked: totalMinutes >= 300,
+      progress: Math.min(100, (totalMinutes / 300) * 100)
+    },
+    {
+      id: 'architect',
+      title: 'สถาปนิกการซ้อม (Routine Creator)',
+      description: 'สร้างตารางฝึก หรือสร้างท่าฝึกเฉพาะตัวอย่างน้อย 1 รายการ',
+      icon: '📋',
+      unlocked: customPlans.length > 0 || customExercises.length > 0,
+      progress: (customPlans.length > 0 || customExercises.length > 0) ? 100 : 0
+    }
+  ];
+};
+
+// --- User Data Backup (Export) ---
+export const exportUserData = (userId = getActiveUserId()) => {
+  const profile = getUserProfile(userId);
+  const workoutLogs = getWorkoutLogs(userId);
+  const customPlans = getCustomPlans(userId);
+  const customExercises = getCustomExercises(userId);
+
+  const exportPayload = {
+    version: '2.0',
+    exportDate: new Date().toISOString(),
+    profile,
+    workoutLogs,
+    customPlans,
+    customExercises
+  };
+
+  const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(exportPayload, null, 2))}`;
+  const downloadAnchor = document.createElement('a');
+  downloadAnchor.setAttribute('href', jsonString);
+  downloadAnchor.setAttribute('download', `FitTrainerAI_User_${profile.name || userId}_${new Date().toISOString().slice(0, 10)}.json`);
+  document.body.appendChild(downloadAnchor);
+  downloadAnchor.click();
+  downloadAnchor.remove();
+};
+
+// --- User Data Restore (Import) ---
+export const importUserData = (jsonData, targetUserId = getActiveUserId()) => {
+  if (!jsonData || typeof jsonData !== 'object') {
+    throw new Error('รูปแบบไฟล์ JSON ไม่ถูกต้อง');
+  }
+
+  const { profile, workoutLogs, customPlans, customExercises } = jsonData;
+
+  if (!profile || !profile.name) {
+    throw new Error('ไม่พบข้อมูลโปรไฟล์ผู้ใช้งานในไฟล์นี้');
+  }
+
+  const userId = targetUserId || profile.id || `user-${Date.now()}`;
+  const profileToSave = { ...profile, id: userId };
+
+  localStorage.setItem(`fittrainer_user_profile_${userId}`, JSON.stringify(profileToSave));
+  if (Array.isArray(workoutLogs)) {
+    localStorage.setItem(`fittrainer_workout_logs_${userId}`, JSON.stringify(workoutLogs));
+  }
+  if (Array.isArray(customPlans)) {
+    localStorage.setItem(`fittrainer_custom_plans_${userId}`, JSON.stringify(customPlans));
+  }
+  if (Array.isArray(customExercises)) {
+    localStorage.setItem(`fittrainer_custom_exercises_${userId}`, JSON.stringify(customExercises));
+  }
+
+  // Update Users summary list
+  const users = getUsersList();
+  const existingIdx = users.findIndex((u) => u.id === userId);
+  if (existingIdx >= 0) {
+    users[existingIdx] = {
+      ...users[existingIdx],
+      name: profileToSave.name,
+      avatar: profileToSave.avatar || '🏋️‍♂️',
+      weightKg: profileToSave.weightKg,
+      targetWeightKg: profileToSave.targetWeightKg,
+      goal: profileToSave.goal,
+      streakDays: profileToSave.streakDays || 1,
+      hasPin: Boolean(profileToSave.pinCode && profileToSave.pinCode.trim().length === 4)
+    };
+  } else {
+    users.push({
+      id: userId,
+      name: profileToSave.name,
+      avatar: profileToSave.avatar || '🏋️‍♂️',
+      weightKg: profileToSave.weightKg,
+      targetWeightKg: profileToSave.targetWeightKg,
+      goal: profileToSave.goal,
+      streakDays: profileToSave.streakDays || 1,
+      hasPin: Boolean(profileToSave.pinCode && profileToSave.pinCode.trim().length === 4)
+    });
+  }
+  localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(users));
+
+  return profileToSave;
+};
+
+// --- Auth Session Management APIs ---
+const STORAGE_KEY_AUTH_SESSION = 'fittrainer_auth_session';
+
+export const getAuthSession = () => {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_AUTH_SESSION);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch (e) {
+    return null;
+  }
+};
+
+export const setAuthSession = (userId) => {
+  const session = {
+    userId,
+    loggedInAt: new Date().toISOString()
+  };
+  localStorage.setItem(STORAGE_KEY_AUTH_SESSION, JSON.stringify(session));
+  return session;
+};
+
+export const clearAuthSession = () => {
+  localStorage.removeItem(STORAGE_KEY_AUTH_SESSION);
+};
+
+
+

@@ -34,7 +34,7 @@ import { EXERCISE_DATABASE, EXERCISE_IMAGE_MAP } from '../data/exerciseDatabase'
 import { WORKOUT_TEMPLATES } from '../data/workoutTemplates';
 import { calculate1RM, estimateCaloriesBurned } from '../utils/fitnessCalculators';
 import { soundManager } from '../utils/timerSound';
-import { getCustomPlans, saveCustomPlan } from '../utils/storage';
+import { getCustomPlans, saveCustomPlan, getAllExercises } from '../utils/storage';
 import PlateCalculatorModal from './PlateCalculatorModal';
 import RestTimerOverlay from './RestTimerOverlay';
 
@@ -838,7 +838,7 @@ export default function GymLogger({
 
   // Add new exercise to active workout
   const handleAddExerciseToWorkout = (exerciseId) => {
-    const fullInfo = EXERCISE_DATABASE.find((e) => e.id === exerciseId);
+    const fullInfo = getAllExercises().find((e) => e.id === exerciseId);
     if (!fullInfo) return;
 
     const updated = { ...workoutSession };
@@ -1073,16 +1073,16 @@ export default function GymLogger({
         {/* Templates Header & Category Filter Tabs */}
         <div>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-            <h3 className="text-lg font-extrabold text-white flex items-center space-x-2">
-              <Sparkles className="w-5 h-5 text-cyan-400" />
+            <h3 className="text-base sm:text-lg font-extrabold text-white flex items-center space-x-2">
+              <Sparkles className="w-5 h-5 text-cyan-400 shrink-0" />
               <span>เลือกโปรแกรมออกกำลังกาย (Workout Plans)</span>
             </h3>
 
             {/* Filter Chips: All, Gym, Home, Custom, 6-Day, PPL */}
-            <div className="flex items-center space-x-2 overflow-x-auto no-scrollbar">
+            <div className="flex items-center space-x-1.5 sm:space-x-2 overflow-x-auto no-scrollbar max-w-full pb-1 shrink-0">
               <button
                 onClick={() => setFilterTag('ALL')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                className={`px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 whitespace-nowrap ${
                   filterTag === 'ALL'
                     ? 'bg-cyan-500 text-slate-950 shadow-md font-black'
                     : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
@@ -1092,7 +1092,7 @@ export default function GymLogger({
               </button>
               <button
                 onClick={() => setFilterTag('GYM')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1 ${
+                className={`px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1 shrink-0 whitespace-nowrap ${
                   filterTag === 'GYM'
                     ? 'bg-cyan-500 text-slate-950 shadow-md font-black'
                     : 'bg-slate-900 text-cyan-400 hover:bg-slate-800 border border-cyan-500/30'
@@ -1102,7 +1102,7 @@ export default function GymLogger({
               </button>
               <button
                 onClick={() => setFilterTag('HOME')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1 ${
+                className={`px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1 shrink-0 whitespace-nowrap ${
                   filterTag === 'HOME'
                     ? 'bg-lime-400 text-slate-950 shadow-md font-black'
                     : 'bg-slate-900 text-lime-400 hover:bg-slate-800 border border-lime-400/30'
@@ -1113,7 +1113,7 @@ export default function GymLogger({
               {allCustomPlans.length > 0 && (
                 <button
                   onClick={() => setFilterTag('CUSTOM')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1 ${
+                  className={`px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1 shrink-0 whitespace-nowrap ${
                     filterTag === 'CUSTOM'
                       ? 'bg-amber-400 text-slate-950 shadow-md font-black'
                       : 'bg-slate-900 text-amber-400 hover:bg-slate-800 border border-amber-400/40'
@@ -1124,7 +1124,7 @@ export default function GymLogger({
               )}
               <button
                 onClick={() => setFilterTag('6DAY')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1 ${
+                className={`px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1 shrink-0 whitespace-nowrap ${
                   filterTag === '6DAY'
                     ? 'bg-lime-400 text-slate-950 shadow-md font-black'
                     : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
@@ -1134,7 +1134,7 @@ export default function GymLogger({
               </button>
               <button
                 onClick={() => setFilterTag('PPL')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                className={`px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 whitespace-nowrap ${
                   filterTag === 'PPL'
                     ? 'bg-cyan-500 text-slate-950 shadow-md font-black'
                     : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
@@ -2677,7 +2677,7 @@ export default function GymLogger({
           <div className="w-full max-w-lg bg-[#131722] border border-slate-800 rounded-3xl p-6">
             <h3 className="text-base font-extrabold text-white mb-4">เพิ่มท่าฝึกในเซสชันนี้</h3>
             <div className="max-h-72 overflow-y-auto space-y-2 pr-1 mb-4">
-              {EXERCISE_DATABASE.map((ex) => (
+              {getAllExercises().map((ex) => (
                 <div
                   key={ex.id}
                   onClick={() => handleAddExerciseToWorkout(ex.id)}
