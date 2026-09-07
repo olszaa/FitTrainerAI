@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Dumbbell,
   Lock,
@@ -20,6 +20,10 @@ import {
   getUserRank,
   createNewUser
 } from '../utils/storage';
+import {
+  calculateBMI,
+  getBMICategory
+} from '../utils/fitnessCalculators';
 
 const AVATAR_OPTIONS = ['🏋️‍♂️', '🏃‍♀️', '🥊', '⚡', '🧘', '🦾', '🥇', '🎯', '🔥', '🚴'];
 
@@ -47,6 +51,28 @@ export default function LoginScreen({
     targetDaysPerWeek: 4,
     pinCode: ''
   });
+
+  // 3D Mannequin Video State for Registration
+  const registerBmi = calculateBMI(registerForm.weightKg, registerForm.heightCm);
+  const registerBmiCategory = getBMICategory(registerBmi);
+  const registerVideoSrc = registerForm.gender === 'FEMALE' ? '/videos/FemaleMannequin.mp4' : '/videos/MaleMannequin.mp4';
+  const registerVideoRef = useRef(null);
+
+  useEffect(() => {
+    if (view !== 'REGISTER') return;
+    const video = registerVideoRef.current;
+    if (video) {
+      const clampedBmi = Math.max(10, Math.min(60, registerBmi));
+      const duration = video.duration || 6.042;
+      const progress = (clampedBmi - 10) / 50;
+      const targetTime = Math.max(0.01, Math.min(duration - 0.05, progress * duration));
+      try {
+        video.currentTime = targetTime;
+      } catch (e) {
+        console.warn('Register video seek error:', e);
+      }
+    }
+  }, [registerBmi, registerForm.gender, view]);
 
   const handleSelectUser = (user) => {
     setSelectedUser(user);
@@ -425,6 +451,56 @@ export default function LoginScreen({
                     className="w-full bg-slate-900 border border-slate-700 text-center font-black text-cyan-300 rounded-xl py-2 outline-none focus:border-cyan-500"
                   />
                 </div>
+              </div>
+
+              {/* 3D Mannequin Video Visualizer Preview for Registration */}
+              <div className="relative rounded-2xl overflow-hidden bg-black/95 border border-cyan-500/40 flex items-center justify-center shadow-inner my-3 h-[220px] sm:h-[250px] w-full">
+                {/* Background Fallback Image */}
+                <img
+                  src="/muscle_heatmap_3d.jpg"
+                  alt="3D Mannequin Fallback"
+                  className="absolute inset-0 w-full h-full object-cover opacity-25 pointer-events-none"
+                />
+
+                {/* HUD Watermark */}
+                <div className="absolute top-2.5 left-2.5 z-20 flex items-center space-x-1.5 text-[9px] font-black tracking-widest text-cyan-400 bg-slate-950/80 px-2.5 py-1 rounded-lg border border-cyan-500/30 backdrop-blur-sm pointer-events-none">
+                  <Sparkles className="w-3 h-3 animate-spin text-cyan-400" />
+                  <span>3D ANATOMY PREVIEW // {registerForm.gender === 'FEMALE' ? 'FEMALE' : 'MALE'}</span>
+                </div>
+
+                <div className="absolute top-2.5 right-2.5 z-20 flex items-center space-x-1.5 text-[10px] font-extrabold bg-slate-950/80 px-2.5 py-1 rounded-lg border border-slate-700 backdrop-blur-sm pointer-events-none">
+                  <span className="text-slate-400">BMI จำลอง:</span>
+                  <span className="text-cyan-400 font-black text-xs">{registerBmi}</span>
+                  <span className="text-[9px] px-1.5 py-0.2 rounded font-bold bg-cyan-500/20 text-cyan-300">
+                    {registerBmiCategory.category}
+                  </span>
+                </div>
+
+                <video
+                  ref={registerVideoRef}
+                  key={`${registerVideoSrc}-${registerBmi}`}
+                  src={registerVideoSrc}
+                  preload="auto"
+                  playsInline
+                  muted
+                  onLoadedMetadata={(e) => {
+                    const duration = e.target.duration || 6.042;
+                    const clampedBmi = Math.max(10, Math.min(60, registerBmi));
+                    const progress = (clampedBmi - 10) / 50;
+                    try {
+                      e.target.currentTime = Math.max(0.01, progress * duration);
+                    } catch (err) {}
+                  }}
+                  onLoadedData={(e) => {
+                    const duration = e.target.duration || 6.042;
+                    const clampedBmi = Math.max(10, Math.min(60, registerBmi));
+                    const progress = (clampedBmi - 10) / 50;
+                    try {
+                      e.target.currentTime = Math.max(0.01, progress * duration);
+                    } catch (err) {}
+                  }}
+                  className="w-full h-full object-cover object-center scale-[1.12] relative z-10"
+                />
               </div>
 
               {/* Goal & Optional PIN */}
