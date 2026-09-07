@@ -140,69 +140,59 @@ export default function Navbar({
                     className="fixed inset-0 z-40"
                     onClick={() => setUserDropdownOpen(false)}
                   />
-                  <div className="absolute right-0 mt-2 w-64 bg-[#131722] border border-cyan-500/30 rounded-2xl p-2.5 shadow-2xl z-50 animate-fade-in space-y-2">
-                    <div className="px-2 py-1.5 border-b border-slate-800">
-                      <div className="text-[10px] uppercase tracking-wider font-extrabold text-cyan-400 flex items-center justify-between">
-                        <span>สลับผู้ใช้งาน (Multi-User)</span>
-                        <span className="text-slate-400">{usersList.length} คน</span>
+                  <div className="absolute right-0 mt-2 w-64 bg-[#131722] border border-cyan-500/30 rounded-2xl p-2.5 shadow-2xl z-50 animate-fade-in space-y-2.5">
+                    {/* Logged in User Only Display */}
+                    <div className="px-2 py-2 bg-slate-900/90 rounded-xl border border-slate-800">
+                      <div className="text-[10px] uppercase tracking-wider font-extrabold text-cyan-400 flex items-center justify-between mb-1">
+                        <span>โปรไฟล์ผู้ใช้งานของคุณ</span>
+                        <span className="text-[9px] px-1.5 py-0.2 rounded font-bold bg-cyan-500/20 text-cyan-300">
+                          Active User
+                        </span>
                       </div>
-                      <div className="text-xs font-bold text-white truncate mt-0.5">
-                        {userProfile?.name} ({userProfile?.weightKg} kg)
-                      </div>
-                    </div>
-
-                    {/* Users list */}
-                    <div className="max-h-48 overflow-y-auto space-y-1 pr-1">
-                      {usersList.map((usr) => {
-                        const isActive = usr.id === activeUserId;
-                        return (
-                          <div
-                            key={usr.id}
-                            onClick={() => {
-                              if (!isActive) onSwitchUser(usr.id);
-                              setUserDropdownOpen(false);
-                            }}
-                            className={`flex items-center justify-between p-2 rounded-xl text-xs cursor-pointer transition-all ${
-                              isActive
-                                ? 'bg-cyan-500/20 border border-cyan-500/40 text-white font-bold'
-                                : 'bg-slate-900/60 hover:bg-slate-800 border border-slate-800 text-slate-300'
-                            }`}
-                          >
-                            <div className="flex items-center space-x-2 min-w-0">
-                              <span className="text-base">{usr.avatar || '🏋️‍♂️'}</span>
-                              <span className="truncate">{usr.name}</span>
-                              {usr.hasPin && (
-                                <Lock className="w-3 h-3 text-purple-400 shrink-0" title="มีรหัส PIN ล็อกไว้" />
-                              )}
-                            </div>
-                            {isActive && <Check className="w-3.5 h-3.5 text-cyan-400 shrink-0" />}
+                      <div className="flex items-center space-x-2.5">
+                        <div className="w-8 h-8 rounded-xl bg-slate-950 border border-cyan-500/40 flex items-center justify-center text-base shrink-0 shadow-inner">
+                          <span>{userProfile?.avatar || '🏋️‍♂️'}</span>
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="text-xs font-black text-white truncate">
+                            {userProfile?.name || 'ผู้ใช้งาน'}
                           </div>
-                        );
-                      })}
+                          <div className="text-[10px] text-slate-400 truncate">
+                            {userProfile?.weightKg ? `น้ำหนัก ${userProfile.weightKg} kg` : ''} {userProfile?.heightCm ? `• ${userProfile.heightCm} cm` : ''}
+                          </div>
+                        </div>
+                      </div>
                     </div>
 
                     {/* Action buttons */}
-                    <div className="pt-1.5 border-t border-slate-800 space-y-1 text-xs font-bold">
-                      <button
-                        onClick={() => {
-                          setUserDropdownOpen(false);
-                          onOpenProfile('USERS');
-                        }}
-                        className="w-full py-1.5 px-2.5 rounded-xl bg-amber-400/15 hover:bg-amber-400/25 text-amber-300 border border-amber-400/30 transition-all flex items-center justify-center space-x-1.5"
-                      >
-                        <Plus className="w-3.5 h-3.5" />
-                        <span>+ เพิ่มผู้ใช้ใหม่ (Add User)</span>
-                      </button>
-
+                    <div className="space-y-1.5 text-xs font-bold pt-1 border-t border-slate-800">
                       <button
                         onClick={() => {
                           setUserDropdownOpen(false);
                           onOpenProfile('PROFILE');
                         }}
-                        className="w-full py-1.5 px-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 transition-all flex items-center justify-center space-x-1.5"
+                        className="w-full py-2 px-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 hover:text-white border border-slate-800 transition-all flex items-center justify-between"
                       >
-                        <Settings className="w-3.5 h-3.5 text-cyan-400" />
-                        <span>⚙️ ข้อมูลสรีระ & สุขภาพ</span>
+                        <div className="flex items-center space-x-2">
+                          <Settings className="w-3.5 h-3.5 text-cyan-400" />
+                          <span>⚙️ ข้อมูลสรีระ & สุขภาพ</span>
+                        </div>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setUserDropdownOpen(false);
+                          if (onOpenAdmin) onOpenAdmin();
+                        }}
+                        className="w-full py-2 px-2.5 rounded-xl bg-gradient-to-r from-amber-400/20 via-amber-300/10 to-amber-500/20 hover:from-amber-400/30 hover:to-amber-500/30 text-amber-300 border border-amber-400/40 transition-all flex items-center justify-between group shadow-sm"
+                      >
+                        <div className="flex items-center space-x-2">
+                          <Lock className="w-3.5 h-3.5 text-amber-400 group-hover:rotate-12 transition-transform" />
+                          <span>👑 จัดการสมาชิก (Admin)</span>
+                        </div>
+                        <span className="text-[9px] px-1.5 py-0.2 rounded font-extrabold bg-amber-400/20 text-amber-300">
+                          Pass Protect
+                        </span>
                       </button>
 
                       {onLogout && (
@@ -211,7 +201,7 @@ export default function Navbar({
                             setUserDropdownOpen(false);
                             onLogout();
                           }}
-                          className="w-full py-1.5 px-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 transition-all flex items-center justify-center space-x-1.5"
+                          className="w-full py-2 px-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 transition-all flex items-center justify-center space-x-1.5"
                         >
                           <LogOut className="w-3.5 h-3.5" />
                           <span>🚪 ออกจากระบบ (Logout)</span>

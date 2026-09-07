@@ -8,6 +8,7 @@ import ExerciseLibrary from './components/ExerciseLibrary';
 import AnalyticsDashboard from './components/AnalyticsDashboard';
 import AITrainerModal from './components/AITrainerModal';
 import UserProfileModal from './components/UserProfileModal';
+import AdminMemberModal from './components/AdminMemberModal';
 import BodyAndMuscles from './components/BodyAndMuscles';
 import LoginScreen from './components/LoginScreen';
 import {
@@ -79,6 +80,7 @@ export default function App() {
   const [activeWorkout, setActiveWorkout] = useState(null);
   const [aiModalOpen, setAiModalOpen] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const [adminModalOpen, setAdminModalOpen] = useState(false);
   const [profileInitialTab, setProfileInitialTab] = useState('PROFILE');
 
   const [templateToOpen, setTemplateToOpen] = useState(null);
@@ -205,6 +207,7 @@ export default function App() {
         activeWorkout={activeWorkout}
         onOpenAIChat={() => setAiModalOpen(true)}
         onOpenProfile={handleOpenProfileModal}
+        onOpenAdmin={() => setAdminModalOpen(true)}
         userProfile={userProfile}
         usersList={usersList}
         activeUserId={activeUserId}
@@ -274,6 +277,17 @@ export default function App() {
         onCreateUser={handleCreateUser}
         onDeleteUser={handleDeleteUser}
         initialTab={profileInitialTab}
+      />
+
+      {/* Admin Member Management Modal */}
+      <AdminMemberModal
+        isOpen={adminModalOpen}
+        onClose={() => setAdminModalOpen(false)}
+        usersList={usersList}
+        activeUserId={activeUserId}
+        onSwitchUser={handleSwitchUser}
+        onDeleteUser={handleDeleteUser}
+        onCreateUser={handleCreateUser}
       />
 
       {/* AI Personal Trainer Coach Flex Modal */}
