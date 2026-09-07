@@ -22,13 +22,35 @@ export const EQUIPMENT_TYPES = {
 };
 
 export const EXERCISE_DATABASE = [
-  // ==================== ท่ากลุ่ม Push (อก / หลังแขน) ====================
+  // ==================== 1. อกกลาง (Mid Chest) ====================
+  {
+    id: 'barbell-bench-press',
+    name: 'Barbell Flat Bench Press',
+    nameTh: 'นอนราบบนม้านั่งดันบาร์เบลอกกลาง (Barbell Flat Bench Press)',
+    category: 'CHEST',
+    muscle: 'Middle Sternal Pectorals (Mid Chest)',
+    secondaryMuscles: ['Anterior Deltoids', 'Triceps Brachii'],
+    equipment: 'BARBELL',
+    isGym: true,
+    isHome: false,
+    instructions: [
+      'นอนราบบนม้านั่ง จับบาร์เบลกว้างกว่าช่วงไหล่เล็กน้อย ปลดล็อกบาร์เบลออกจากแร็ค',
+      'หย่อนบาร์เบลลงมาสัมผัสกึ่งกลางหน้าอกเบาๆ อย่างมีควบคุม',
+      'ออกแรงดันบาร์เบลขึ้นตรงเหนือหน้าอก หายใจออกขณะดันขึ้น'
+    ],
+    tips: 'หนีบสะบักเข้าหากัน วางเท้าแนบติดพื้นเพื่อเพิ่มความมั่นคงตลอดการดัน',
+    icon: '🏋️‍♂️',
+    prompt3D: {
+      imagePrompt: 'Full-body side angle shot, a 3D faceless matte-grey anatomical mannequin wearing black athletic shorts, lying on a flat bench pressing a barbell upwards directly over the chest. High-precision 3D medical anatomy render where the entire middle sternal head of the pectoral muscles glows intensely in vivid neon red with electric cyan fiber lines. Solid pitch-black background, studio rim lighting, Unreal Engine 5 render, clean aesthetics, 2k resolution, aspect ratio 9:16.',
+      videoPrompt: 'Vertical 9:16 video, 3D mannequin barbell flat bench press with middle sternal head of pectoral glowing in vivid neon red, pitch-black background.'
+    }
+  },
   {
     id: 'db-bench-press',
-    name: 'Dumbbell Bench Press',
-    nameTh: 'นอนราบบนม้านั่งดันดัมเบล (DB Bench Press)',
+    name: 'Dumbbell Flat Bench Press',
+    nameTh: 'นอนราบบนม้านั่งดันดัมเบลอกกลาง (DB Bench Press)',
     category: 'CHEST',
-    muscle: 'Pectoral Chest Muscles',
+    muscle: 'Pectoralis Major (Mid Chest)',
     secondaryMuscles: ['Triceps', 'Anterior Deltoids'],
     equipment: 'DUMBBELL',
     isGym: true,
@@ -41,16 +63,84 @@ export const EXERCISE_DATABASE = [
     tips: 'บีบกล้ามเนื้อหน้าอกเข้าหากันที่จุดสูงสุด และรักษาหลังส่วนล่างให้อยู่ในแนวธรรมชาติ',
     icon: '🏋️‍♂️',
     prompt3D: {
-      imagePrompt: 'Full-body shot, a 3D faceless grey anatomical mannequin lying on a flat bench performing a dumbbell bench press. Pectoral chest muscles highlighted with an intense glowing red overlay showing muscle contraction, subtle blue glow along the sternum. Pitch black background, clean rim lighting, medical 3D CGI render, Unreal Engine 5, 2k resolution, aspect ratio 9:16.',
+      imagePrompt: 'Full-body front three-quarter view, a 3D faceless matte-grey mannequin wearing black athletic shorts, lying on a flat bench pushing two heavy dumbbells upward with arms extended. The entire pectoral major muscle group glows brightly in vibrant red with blue glowing accents across the chest plate. Pitch-black solid dark background, dramatic rim lighting, photorealistic 3D CGI render, 2k resolution, aspect ratio 9:16.',
       videoPrompt: 'Vertical video, 3D faceless grey mannequin performing DB Bench Press with glowing red chest contraction highlights, dark background, 4k.'
     }
   },
   {
-    id: 'incline-barbell-press',
-    name: 'Incline Barbell Press',
-    nameTh: 'ดันบาร์เบลม้านั่งปรับเอียง (Incline Barbell Press)',
+    id: 'db-chest-fly',
+    name: 'Dumbbell Chest Fly',
+    nameTh: 'นอนราบบนม้านั่งกางแขนดันดัมเบลอกกลาง (Dumbbell Chest Fly)',
     category: 'CHEST',
-    muscle: 'Upper Clavicular Pectoral',
+    muscle: 'Pectoralis Major Stretch & Sternal Head',
+    secondaryMuscles: ['Anterior Deltoids', 'Biceps Short Head'],
+    equipment: 'DUMBBELL',
+    isGym: true,
+    isHome: true,
+    instructions: [
+      'นอนราบบนม้านั่ง ถือดัมเบลไว้เหนืออก แขนเหยียดตรงและงอข้อศอกเล็กน้อย',
+      'กางแขนออกด้านข้างอย่างช้าๆ โค้งเป็นวงกว้างจนรู้สึกยืดเต็มที่บริเวณอก',
+      'หุบแขนกลับขึ้นมาบรรจบกันเหนือหน้าอกโดยใช้แรงบีบจากกล้ามเนื้ออก'
+    ],
+    tips: 'รักษาองศาข้อศอกให้คงที่ตลอดการเคลื่อนไหว อย่าเปลี่ยนท่าเป็นท่าดัน',
+    icon: '🦋',
+    prompt3D: {
+      imagePrompt: 'Full-body top-down three-quarter angle, a 3D faceless matte-grey mannequin on a flat workout bench opening both arms wide with slight elbow bend, holding dumbbells in a fly motion. The chest pectorals are under deep stretch, glowing intensely in radiant neon red and orange. Pitch-black background, sharp anatomical details, 2k resolution, aspect ratio 9:16.',
+      videoPrompt: 'Vertical 9:16 video, 3D mannequin dumbbell chest fly with radiant neon red and orange pectoral stretch glow, dark background.'
+    }
+  },
+  {
+    id: 'standing-cable-chest-fly',
+    name: 'Standing Cable Chest Fly',
+    nameTh: 'ยืนหนีบสายเคเบิลอกกลางรอกกลาง (Standing Cable Fly)',
+    category: 'CHEST',
+    muscle: 'Sternal Head Pectorals (Mid Chest)',
+    secondaryMuscles: ['Anterior Deltoids', 'Core'],
+    equipment: 'CABLE',
+    isGym: true,
+    isHome: false,
+    instructions: [
+      'ยืนตรงกลางเครื่องเคเบิล ปรับระดับรอกให้อยู่กึ่งกลางระดับหน้าอก จับด้ามจับทั้งสองข้าง',
+      'ก้าวขาไปข้างหน้าหนึ่งก้าว โน้มตัวเล็กน้อย ดึงด้ามจับเคเบิลมาบรรจบกันด้านหน้าอก',
+      'บีบกล้ามเนื้ออกกลางค้างไว้ 1 วินาที แล้วค่อยๆ ผ่อนแขนยืดกลับช้าๆ'
+    ],
+    tips: 'เกร็งแกนกลางลำตัวให้นิ่ง บีบอกเข้าหากันที่จุดเกร็งสุดเพื่อแรงต้านต่อเนื่อง',
+    icon: '⚡',
+    prompt3D: {
+      imagePrompt: 'Full-body front view, a 3D faceless matte-grey anatomical mannequin wearing black athletic shorts standing tall between cable pulleys, bringing cable handles together in front of the chest. The mid-chest pectorals contract tightly, glowing with an intense bright red luminescence and neon cyan accents along the sternum. Pitch-black solid dark background, studio rim lighting, 2k resolution, aspect ratio 9:16.',
+      videoPrompt: 'Vertical video, standing cable chest fly with mid-chest pectorals glowing bright red and neon cyan accents, pitch-black background.'
+    }
+  },
+  {
+    id: 'kettlebell-floor-press',
+    name: 'Kettlebell Floor Press',
+    nameTh: 'นอนดันเคทเทิลเบลบนพื้น (Kettlebell Floor Press)',
+    category: 'CHEST',
+    muscle: 'Middle Pectorals & Triceps Lockout',
+    secondaryMuscles: ['Triceps Brachii', 'Anterior Deltoids'],
+    equipment: 'KETTLEBELL',
+    isGym: true,
+    isHome: true,
+    instructions: [
+      'นอนราบกับพื้น ถือเคทเทิลเบลด้วยมือทั้งสองข้าง งอเข่าตั้งเท้าบนพื้น',
+      'ดันเคทเทิลเบลขึ้นตรงเหนือหน้าอกจนแขนเหยียดตึง',
+      'ลดเคทเทิลเบลลงมาจนท่อนแขนด้านหลังสัมผัสพื้นเบาๆ แล้วดันขึ้นซ้ำ'
+    ],
+    tips: 'การทำบนพื้นช่วยเซฟไหล่และจำกัดระยะลง ป้องกันอาการบาดเจ็บที่ข้อต่อไหล่',
+    icon: '🔔',
+    prompt3D: {
+      imagePrompt: 'Full-body shot, a 3D faceless matte-grey mannequin lying flat on a dark workout mat on the floor, pressing two kettlebells straight up over the chest. Middle chest muscles illuminated with a brilliant glowing red and blue anatomical overlay. No bench, clean floor setting, pitch-black background, Unreal Engine 5, 2k resolution, aspect ratio 9:16.',
+      videoPrompt: 'Vertical video, 3D mannequin kettlebell floor press with glowing red and blue middle chest overlay, dark background.'
+    }
+  },
+
+  // ==================== 2. อกบน (Upper Chest) ====================
+  {
+    id: 'incline-barbell-press',
+    name: 'Incline Barbell Bench Press',
+    nameTh: 'ดันบาร์เบลม้านั่งปรับเอียงอกบน (Incline Barbell Press)',
+    category: 'CHEST',
+    muscle: 'Clavicular Head (Upper Chest)',
     secondaryMuscles: ['Anterior Deltoids', 'Triceps'],
     equipment: 'BARBELL',
     isGym: true,
@@ -63,8 +153,188 @@ export const EXERCISE_DATABASE = [
     tips: 'ไม่ควรปรับเบาะชันเกิน 45 องศา เพื่อไม่ให้น้ำหนักตกไปที่หัวไหล่หน้ามากเกินไป',
     icon: '🏋️‍♂️',
     prompt3D: {
-      imagePrompt: 'Full-body shot, a 3D faceless grey anatomical mannequin on an incline bench at 45 degrees, pressing a barbell upwards. Upper clavicular pectoral muscles glow with a bright red and neon blue highlight overlay. Solid black background, high-contrast studio rim lighting, cinematic 3D render, 2k resolution, aspect ratio 9:16.',
+      imagePrompt: 'Full-body shot, a 3D faceless matte-grey mannequin wearing black athletic shorts on a 45-degree incline bench, pressing a barbell upward. Accurate medical anatomy render where ONLY the clavicular head (upper chest muscles directly below the collarbone) glows intensely in vivid neon red and cyan, clearly separated from the mid-chest. Solid pitch-black background, high-contrast rim lighting, 2k resolution, aspect ratio 9:16.',
       videoPrompt: 'Vertical video, 3D mannequin incline bench pressing barbell with upper chest glowing red and blue, 4k 60fps.'
+    }
+  },
+  {
+    id: 'incline-db-bench-press',
+    name: 'Incline Dumbbell Bench Press',
+    nameTh: 'ดันดัมเบลม้านั่งปรับเอียงอกบน (Incline DB Bench Press)',
+    category: 'CHEST',
+    muscle: 'Clavicular Pectoralis (Upper Chest)',
+    secondaryMuscles: ['Anterior Deltoids', 'Triceps'],
+    equipment: 'DUMBBELL',
+    isGym: true,
+    isHome: true,
+    instructions: [
+      'ปรับม้านั่งเอียง 30-45 องศา นอนพิงเบาะ ถือดัมเบลสองข้างระดับอกส่วนบน',
+      'ดันดัมเบลขึ้นตรงสวิงเข้าหากันเล็กน้อยที่จุดสูงสุดเหนืออกบน',
+      'ลดดัมเบลลงอย่างควบคุมจนรู้สึกยืดที่อกส่วนบนแล้วดันขึ้นซ้ำ'
+    ],
+    tips: 'รักษาตำแหน่งข้อศอกให้ทำมุม 45 องศากับลำตัว ไม่กางข้อศอกออกมากเกินไป',
+    icon: '🏋️‍♂️',
+    prompt3D: {
+      imagePrompt: 'Full-body front three-quarter view, a 3D faceless matte-grey mannequin on a 30-to-45-degree incline bench pushing two dumbbells toward the ceiling. The upper chest (clavicular pectoralis) glows with a bright red-orange holographic energy effect, contracting at the top. Pitch-black dark mode background, studio lighting, 2k resolution, aspect ratio 9:16.',
+      videoPrompt: 'Vertical video, 3D mannequin incline dumbbell press with upper chest glowing red-orange holographic energy, 4k.'
+    }
+  },
+  {
+    id: 'incline-db-fly',
+    name: 'Incline Dumbbell Fly',
+    nameTh: 'กางแขนดันดัมเบลม้านั่งปรับเอียงอกบน (Incline DB Fly)',
+    category: 'CHEST',
+    muscle: 'Upper Pectoral Fibers (Upper Chest Stretch)',
+    secondaryMuscles: ['Anterior Deltoids', 'Biceps'],
+    equipment: 'DUMBBELL',
+    isGym: true,
+    isHome: true,
+    instructions: [
+      'นอนบนม้านั่งปรับเอียง 30-45 องศา ถือดัมเบลขึ้นเหนืออกบน งอศอกเล็กน้อย',
+      'กางแขนออกด้านข้างเป็นวงกว้างจนรู้สึกยืดเต็มที่บริเวณอกส่วนบน',
+      'ใช้แรงเกร็งจากอกส่วนบนหุบแขนกลับขึ้นสู่จุดเริ่มต้น'
+    ],
+    tips: 'เน้นจังหวะผ่อนลงช้าๆ เพื่อยืดเส้นใยกล้ามเนื้ออกบนเต็มประสิทธิภาพ',
+    icon: '🦋',
+    prompt3D: {
+      imagePrompt: 'Full-body side angle, a 3D faceless matte-grey mannequin lying on an incline bench with arms spread wide holding dumbbells, elbows slightly curved. Upper pectoral fibers illuminate in glowing bright red under intense eccentric stretch. Solid black void background, clean 3D render, 2k resolution, aspect ratio 9:16.',
+      videoPrompt: 'Vertical video, incline dumbbell fly with glowing bright red upper pectoral fibers under stretch, black void background.'
+    }
+  },
+  {
+    id: 'low-to-high-cable-fly',
+    name: 'Low-to-High Cable Fly',
+    nameTh: 'ดึงสายเคเบิลจากล่างขึ้นบนเน้นอกบน (Low-to-High Cable Fly)',
+    category: 'CHEST',
+    muscle: 'Upper Clavicular Pectorals (Upper Chest)',
+    secondaryMuscles: ['Anterior Deltoids', 'Core'],
+    equipment: 'CABLE',
+    isGym: true,
+    isHome: false,
+    instructions: [
+      'ปรับรอกเคเบิลให้อยู่ระดับล่างสุด จับด้ามจับขึ้นมา ยืนตรงกลางก้าวขาไปข้างหน้า',
+      'ดึงด้ามจับเคเบิลเฉียงขึ้นด้านบนจนมาบรรจบกันระดับสายตาหรือหน้าผาก',
+      'เกร็งอกบนค้างไว้ที่จุดสูงสุด 1 วินาที แล้วค่อยๆ ผ่อนลง'
+    ],
+    tips: 'จังหวะดึงขึ้นให้จินตนาการว่ากำลังโอบกอดต้นไม้ขึ้นด้านบนเพื่อเน้นรอยหยักอกบน',
+    icon: '⚡',
+    prompt3D: {
+      imagePrompt: 'Full-body front shot, a 3D faceless matte-grey mannequin standing upright, pulling two low cable handles diagonally upward to eye level. The upper chest muscles glow vividly in electric cyan and bright red, emphasizing the upward contraction. Pitch-black solid background, cinematic rim lighting, 2k resolution, aspect ratio 9:16.',
+      videoPrompt: 'Vertical video, low to high cable fly with upper chest muscles glowing electric cyan and bright red, pitch-black background.'
+    }
+  },
+
+  // ==================== 3. อกล่าง (Lower Chest) ====================
+  {
+    id: 'high-to-low-cable-fly',
+    name: 'High-to-Low Cable Fly',
+    nameTh: 'ดึงสายเคเบิลจากบนลงล่างเน้นอกล่าง (High-to-Low Cable Fly)',
+    category: 'CHEST',
+    muscle: 'Abdominal Head Pectorals (Lower Chest Line)',
+    secondaryMuscles: ['Lower Pectorals', 'Anterior Deltoids'],
+    equipment: 'CABLE',
+    isGym: true,
+    isHome: false,
+    instructions: [
+      'ปรับรอกเคเบิลอยู่ตำแหน่งสูง ยืนตรงกลางก้าวขาไปข้างหน้า โน้มตัวเล็กน้อย',
+      'ดึงด้ามจับเคเบิลเฉียงลงด้านล่างไปบรรจบกันระดับหน้าท้องหรือเอว',
+      'เกร็งกล้ามเนื้ออกล่างค้างไว้ แล้วค่อยๆ คลายแขนกลับขึ้นด้านบน'
+    ],
+    tips: 'ดึงลงให้ตัดผ่านเส้นขอบอกล่าง ช่วยสร้างขอบอกล่างที่คมชัด',
+    icon: '⚡',
+    prompt3D: {
+      imagePrompt: 'Full-body front three-quarter shot, a 3D faceless matte-grey mannequin wearing black shorts standing slightly leaned forward, pulling cable handles from a high pulley downward toward the waistline. The lower abdominal head of the pectoral muscles (lower chest line) glows sharply in neon red and blue, highlighting lower chest definition. Pitch-black dark studio background, 2k resolution, aspect ratio 9:16.',
+      videoPrompt: 'Vertical video, high to low cable fly with lower chest line glowing in neon red and blue, dark studio background.'
+    }
+  },
+  {
+    id: 'decline-db-press',
+    name: 'Decline Dumbbell Press',
+    nameTh: 'นอนม้านั่งหัวต่ำดันดัมเบลอกล่าง (Decline DB Press)',
+    category: 'CHEST',
+    muscle: 'Lower Pectoral Margin (Lower Chest)',
+    secondaryMuscles: ['Triceps', 'Anterior Deltoids'],
+    equipment: 'DUMBBELL',
+    isGym: true,
+    isHome: true,
+    instructions: [
+      'นอนบนม้านั่งปรับระดับหัวต่ำ (Decline Bench) ล็อกขาให้แน่น ถือถือดัมเบลสองข้าง',
+      'ดันดัมเบลขึ้นตรงเหนืออกล่าง แขนเหยียดเกือบตึง',
+      'ลดดัมเบลลงอย่างควบคุมจนรู้สึกยืดบริเวณขอบอกล่าง แล้วดันขึ้นซ้ำ'
+    ],
+    tips: 'เกร็งหน้าท้องและล็อกขาให้มั่นคง ป้องกันตัวลื่นหลุดจากม้านั่งหัวต่ำ',
+    icon: '🏋️‍♂️',
+    prompt3D: {
+      imagePrompt: 'Full-body shot, a 3D faceless matte-grey mannequin on a decline workout bench with legs hooked, pressing dumbbells upward. The lower chest margin glows brightly with a vibrant red-orange highlight, showing peak contraction. Solid pitch-black background, medical CGI precision, 2k resolution, aspect ratio 9:16.',
+      videoPrompt: 'Vertical video, decline dumbbell press with lower chest glowing in red-orange highlight, pitch-black background.'
+    }
+  },
+  {
+    id: 'incline-push-up',
+    name: 'Incline Push-Up (Bench)',
+    nameTh: 'ดันพื้นมือวางบนม้านั่งเน้นอกล่าง (Incline Push-Up)',
+    category: 'CHEST',
+    muscle: 'Lower Pectorals & Core',
+    secondaryMuscles: ['Triceps', 'Anterior Deltoids'],
+    equipment: 'BODYWEIGHT',
+    isGym: true,
+    isHome: true,
+    instructions: [
+      'วางมือทั้งสองข้างบนม้านั่งหรือขอบโต๊ะ ถอยเท้ายืดตัวตรงในท่าแพลงก์',
+      'งอข้อศอกลดลำตัวลงมาจนกระทั่งหน้าอกแตะขอบม้านั่งเบาๆ',
+      'ออกแรงดันลำตัวกลับขึ้นสู่ตำแหน่งเริ่มต้น'
+    ],
+    tips: 'ท่านี้ช่วยลดภาระน้ำหนัก เหมาะสำหรับมือใหม่หรือใช้ปั๊มอกล่างปิดท้ายวันเล่นอก',
+    icon: '🪵',
+    prompt3D: {
+      imagePrompt: 'Full-body horizontal side view, a 3D faceless matte-grey mannequin in a straight push-up plank position with both hands placed on a flat workout bench. The lower chest pectorals glow in intense neon red as the body pushes upward. No gym machines, pitch-black background, clean studio lighting, 2k resolution, aspect ratio 9:16.',
+      videoPrompt: 'Vertical video, incline push-up on workout bench with glowing neon red lower chest pectorals, pitch-black background.'
+    }
+  },
+
+  // ==================== 4. อกใน และ ขยายทรวงอก (Inner Chest & Expansion) ====================
+  {
+    id: 'hex-press',
+    name: 'Dumbbell Squeeze Press (Hex Press)',
+    nameTh: 'หนีบดัมเบลสองข้างดันอกใน (Hex Squeeze Press)',
+    category: 'CHEST',
+    muscle: 'Sternal Inner Chest Cleavage',
+    secondaryMuscles: ['Triceps', 'Anterior Deltoids'],
+    equipment: 'DUMBBELL',
+    isGym: true,
+    isHome: true,
+    instructions: [
+      'นอนราบบนม้านั่ง ถือดัมเบลทรงหกเหลี่ยมสองข้างกดแนบติดกันแน่นๆ กลางหน้าอก',
+      'ดันดัมเบลขึ้นตรงพร้อมกับออกแรงบีบดัมเบลทั้งสองข้างเข้าหากันตลอดเวลา',
+      'ลดดัมเบลลงมาสัมผัสหน้าอกกลาง โดยยังคงออกแรงบีบหนีบดัมเบลไม่ให้แยกจากกัน'
+    ],
+    tips: 'หัวใจสำคัญคือแรงหนีบเข้าหากันตลอดการเคลื่อนไหว เพื่อสร้างร่องอกกลางให้ลึกหนา',
+    icon: '🧱',
+    prompt3D: {
+      imagePrompt: 'Full-body front angle, a 3D faceless matte-grey mannequin on a flat bench pressing two hexagonal dumbbells clamped tightly together against each other above the center of the chest. The inner chest cleavage and sternal pectoral fibers glow intensely in a dense neon blue and burning red line. Pitch-black solid background, 2k resolution, aspect ratio 9:16.',
+      videoPrompt: 'Vertical video, hex press with inner chest cleavage glowing in neon blue and burning red line, pitch-black background.'
+    }
+  },
+  {
+    id: 'db-pullover',
+    name: 'Dumbbell Pullover',
+    nameTh: 'นอนขวางม้านั่งยืดดัมเบลข้ามศีรษะขยายทรวงอก (Dumbbell Pullover)',
+    category: 'CHEST',
+    muscle: 'Serratus Anterior, Upper Chest & Ribcage Expansion',
+    secondaryMuscles: ['Latissimus Dorsi', 'Triceps Long Head'],
+    equipment: 'DUMBBELL',
+    isGym: true,
+    isHome: true,
+    instructions: [
+      'นอนขวางม้านั่ง ให้หลังส่วนบนวางบนเบาะ วางเท้าติดพื้น วางสะโพกลดต่ำลงเล็กน้อย',
+      'ถือดัมเบลหนึ่งลูกด้วยมือสองข้างขนานกับอก หย่อนดัมเบลข้ามศีรษะลงช้าๆ จนยืดอกและโครงซี่โครง',
+      'ดึงดัมเบลย้อนกลับมาที่ตำแหน่งเหนืออกโดยใช้แรงเกร็งจากอกและฟันเลื่อย (Serratus)'
+    ],
+    tips: 'หย่อนดัมเบลลงให้ยืดโครงซี่โครงและอกเต็มที่ ช่วยเปิดขยายทรวงอกให้กว้างขึ้น',
+    icon: '🎈',
+    prompt3D: {
+      imagePrompt: 'Full-body side profile, a 3D faceless matte-grey mannequin lying perpendicular across a flat bench, holding a single dumbbell overhead in a deep stretch behind the head. Entire chest cage, upper pectorals, and serratus anterior glow in vibrant red and neon yellow to visualize ribcage expansion and muscle stretch. Pitch-black dark background, 2k resolution, aspect ratio 9:16.',
+      videoPrompt: 'Vertical video, dumbbell pullover with chest cage and serratus glowing in vibrant red and neon yellow, dark background.'
     }
   },
   {
@@ -407,9 +677,23 @@ export const EXERCISE_DATABASE = [
 ];
 
 export const EXERCISE_IMAGE_MAP = {
-  // Push Group
+  // Push Group (Chest Exercises)
+  'barbell-bench-press': '/exercises/bench_press.jpg',
   'db-bench-press': '/exercises/db_bench_press.jpg',
+  'db-chest-fly': '/exercises/db_bench_press.jpg',
+  'standing-cable-chest-fly': '/exercises/seated_cable_row.jpg',
+  'kettlebell-floor-press': '/exercises/db_bench_press.jpg',
   'incline-barbell-press': '/exercises/incline_press.jpg',
+  'incline-db-bench-press': '/exercises/incline_press.jpg',
+  'incline-db-fly': '/exercises/incline_press.jpg',
+  'low-to-high-cable-fly': '/exercises/incline_press.jpg',
+  'high-to-low-cable-fly': '/exercises/tricep_pushdown.jpg',
+  'decline-db-press': '/exercises/db_bench_press.jpg',
+  'incline-push-up': '/exercises/plank.jpg',
+  'hex-press': '/exercises/db_bench_press.jpg',
+  'db-pullover': '/exercises/overhead_db_extension.jpg',
+
+  // Triceps
   'tricep-pushdown': '/exercises/tricep_pushdown.jpg',
   'overhead-db-extension': '/exercises/overhead_db_extension.jpg',
 
