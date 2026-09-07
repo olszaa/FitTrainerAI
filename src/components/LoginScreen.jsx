@@ -36,6 +36,11 @@ export default function LoginScreen({
   onRefreshUsers
 }) {
   const [view, setView] = useState('SELECT_ACCOUNT'); // 'SELECT_ACCOUNT' | 'ENTER_PIN' | 'REGISTER'
+  const [loginSubTab, setLoginSubTab] = useState('FORM'); // 'FORM' | 'LIST'
+  const [directUsername, setDirectUsername] = useState('');
+  const [directPassword, setDirectPassword] = useState('');
+  const [directLoginError, setDirectLoginError] = useState('');
+
   const [selectedUser, setSelectedUser] = useState(null);
   const [pinInput, setPinInput] = useState('');
   const [pinError, setPinError] = useState('');
@@ -103,6 +108,61 @@ export default function LoginScreen({
     setIsCloudSyncing(false);
     setSyncStatusMsg('');
     onLoginSuccess(userId);
+  };
+
+  const handleDirectLoginSubmit = async (e) => {
+    if (e) e.preventDefault();
+    if (!directUsername.trim()) {
+      setDirectLoginError('กรุณากรอกชื่อผู้ใช้งาน (Username)');
+      return;
+    }
+
+    setDirectLoginError('');
+    setIsCloudSyncing(true);
+    setSyncStatusMsg('🔍 กำลังตรวจสอบบัญชีและรหัสผ่าน...');
+
+    // Pull latest profiles from Supabase Cloud
+    const cloudUsers = await syncCloudProfilesToLocal();
+    if (onRefreshUsers) onRefreshUsers();
+
+    const searchName = directUsername.trim().toLowerCase();
+    const allUsers = cloudUsers || usersList;
+    const match = allUsers.find(
+      (u) => u.name && u.name.trim().toLowerCase() === searchName
+    );
+
+    if (!match) {
+      setIsCloudSyncing(false);
+      setSyncStatusMsg('');
+      setDirectLoginError(`ไม่พบบัญชีผู้ใช้งานชื่อ "${directUsername.trim()}" ในระบบ คุณสามารถสมัครสมาชิกใหม่ได้ทันทีด้านล่าง`);
+      return;
+    }
+
+    // Account found -> Check PIN requirement
+    const profile = getUserProfile(match.id);
+    const hasPin = profile.pinCode && profile.pinCode.trim().length === 4;
+
+    if (hasPin) {
+      if (!directPassword.trim()) {
+        setIsCloudSyncing(false);
+        setSyncStatusMsg('');
+        setSelectedUser(match);
+        setPinInput('');
+        setPinError('บัญชีนี้ตั้งรหัสผ่าน PIN ไว้ กรุณาป้อน PIN 4 หลักเพื่อเข้าใช้งาน');
+        setView('ENTER_PIN');
+        return;
+      }
+
+      if (!verifyUserPin(match.id, directPassword.trim())) {
+        setIsCloudSyncing(false);
+        setSyncStatusMsg('');
+        setDirectLoginError('รหัสผ่าน PIN ไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง');
+        return;
+      }
+    }
+
+    // Success -> Process login & cloud sync!
+    await processLogin(match.id);
   };
 
   const handleSelectUser = async (user) => {
@@ -223,80 +283,183 @@ export default function LoginScreen({
                 🔑 เข้าสู่ระบบใช้งาน (Log In)
               </h2>
               <p className="text-xs sm:text-sm text-slate-400 max-w-md mx-auto">
-                กดปุ่ม <strong className="text-cyan-300">"เข้าสู่ระบบ"</strong> ที่บัญชีของคุณด้านล่าง เพื่อเข้าใช้งานบันทึกการออกกำลังกาย
+                ป้อนชื่อผู้ใช้งาน (Username) และรหัสผ่านเพื่อเข้าสู่ระบบจากเครื่องใดก็ได้
               </p>
             </div>
 
-            {/* Users Account List Grid */}
-            <div className="space-y-3">
-              {usersList.map((user) => {
-                const rank = getUserRank(user.id);
-                const isPinProtected = user.hasPin;
-
-                return (
-                  <div
-                    key={user.id}
-                    onClick={() => handleSelectUser(user)}
-                    className="glass-panel border-slate-800 hover:border-cyan-500/60 rounded-3xl p-4 sm:p-5 flex items-center justify-between cursor-pointer transition-all duration-300 hover:-translate-y-1 group shadow-xl bg-gradient-to-r from-[#131722] via-[#131722] to-slate-950"
-                  >
-                    <div className="flex items-center space-x-4 min-w-0">
-                      {/* Avatar */}
-                      <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl bg-slate-950 border border-slate-700 flex items-center justify-center text-3xl shrink-0 group-hover:scale-105 transition-transform shadow-inner">
-                        <span>{user.avatar || '🏋️‍♂️'}</span>
-                      </div>
-
-                      {/* Info */}
-                      <div className="min-w-0">
-                        <div className="flex items-center space-x-2">
-                          <h3 className="text-base sm:text-lg font-black text-white group-hover:text-cyan-300 transition-colors truncate">
-                            {user.name}
-                          </h3>
-                          <span className={`text-[9px] font-black px-2 py-0.5 rounded-full bg-gradient-to-r ${rank.badgeBg} shrink-0`}>
-                            {rank.icon} {rank.title}
-                          </span>
-                        </div>
-                        <p className="text-xs text-slate-400 mt-1 flex items-center space-x-2">
-                          <span>{user.gender === 'FEMALE' ? '👩 หญิง' : '👨 ชาย'}</span>
-                          <span>•</span>
-                          <span>{user.weightKg} kg</span>
-                          <span>•</span>
-                          <span>ฝึก {user.targetDaysPerWeek || 4} วัน/สัปดาห์</span>
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Prominent Login Button */}
-                    <div className="flex items-center space-x-2 shrink-0 pl-2">
-                      {isPinProtected ? (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleSelectUser(user);
-                          }}
-                          className="px-3.5 py-2.5 rounded-2xl bg-purple-500/20 hover:bg-purple-500 text-purple-300 hover:text-white border border-purple-500/40 text-xs font-black transition-all flex items-center space-x-1.5 shadow-md active:scale-95"
-                        >
-                          <Lock className="w-4 h-4" />
-                          <span>ใส่ PIN เข้าสู่ระบบ</span>
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleSelectUser(user);
-                          }}
-                          className="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-cyan-500 to-lime-400 hover:brightness-110 text-slate-950 text-xs font-black transition-all flex items-center space-x-1.5 shadow-lg shadow-cyan-500/20 active:scale-95 group-hover:scale-105"
-                        >
-                          <span>เข้าสู่ระบบ</span>
-                          <ArrowRight className="w-4 h-4 stroke-[3]" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
+            {/* Login Mode Switcher Tabs */}
+            <div className="flex items-center p-1 bg-slate-900/90 border border-slate-800 rounded-2xl max-w-md mx-auto shadow-inner">
+              <button
+                type="button"
+                onClick={() => setLoginSubTab('FORM')}
+                className={`flex-1 py-2.5 rounded-xl font-black text-xs transition-all flex items-center justify-center space-x-2 ${
+                  loginSubTab === 'FORM'
+                    ? 'bg-gradient-to-r from-cyan-500 to-lime-400 text-slate-950 shadow-md scale-[1.02]'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <User className="w-4 h-4 stroke-[2.5]" />
+                <span>พิมพ์ชื่อ & รหัสผ่าน</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setLoginSubTab('LIST')}
+                className={`flex-1 py-2.5 rounded-xl font-black text-xs transition-all flex items-center justify-center space-x-2 ${
+                  loginSubTab === 'LIST'
+                    ? 'bg-gradient-to-r from-cyan-500 to-lime-400 text-slate-950 shadow-md scale-[1.02]'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <Users className="w-4 h-4 stroke-[2.5]" />
+                <span>เลือกบัญชีในเครื่อง ({usersList.length})</span>
+              </button>
             </div>
+
+            {/* Cloud Sync Spinner Banner */}
+            {isCloudSyncing && syncStatusMsg && (
+              <div className="flex items-center justify-center space-x-2 p-3 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 font-bold text-xs animate-pulse">
+                <Sparkles className="w-4 h-4 animate-spin text-cyan-400" />
+                <span>{syncStatusMsg}</span>
+              </div>
+            )}
+
+            {/* SUBTAB 1: FORM LOGIN (Direct Username & Password Input) */}
+            {loginSubTab === 'FORM' && (
+              <form onSubmit={handleDirectLoginSubmit} className="glass-panel border-cyan-500/40 rounded-3xl p-6 sm:p-8 space-y-5 shadow-2xl bg-gradient-to-b from-[#131722] via-[#131722] to-slate-950 text-left">
+                <div className="space-y-1.5">
+                  <label className="block text-slate-200 font-extrabold text-xs">
+                    ชื่อผู้ใช้งาน (Username) <span className="text-rose-400">*</span>
+                  </label>
+                  <div className="relative">
+                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-cyan-400" />
+                    <input
+                      type="text"
+                      required
+                      autoFocus
+                      placeholder="ป้อนชื่อบัญชี เช่น คุณยท, Ake..."
+                      value={directUsername}
+                      onChange={(e) => {
+                        setDirectUsername(e.target.value);
+                        setDirectLoginError('');
+                      }}
+                      className="w-full bg-slate-900/90 border border-slate-700 text-white rounded-2xl pl-10 pr-4 py-3 outline-none focus:border-cyan-400 font-bold text-sm shadow-inner"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="block text-slate-200 font-extrabold text-xs">
+                    รหัสผ่าน / PIN 4 หลัก (Password / PIN)
+                  </label>
+                  <div className="relative">
+                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-400" />
+                    <input
+                      type="password"
+                      maxLength={4}
+                      placeholder="รหัสผ่าน PIN 4 หลัก (ถ้ามี)"
+                      value={directPassword}
+                      onChange={(e) => {
+                        setDirectPassword(e.target.value.replace(/\D/g, ''));
+                        setDirectLoginError('');
+                      }}
+                      className="w-full bg-slate-900/90 border border-slate-700 text-white rounded-2xl pl-10 pr-4 py-3 outline-none focus:border-purple-400 font-mono tracking-widest font-bold text-sm shadow-inner"
+                    />
+                  </div>
+                  <span className="text-[10px] text-slate-400 block pt-0.5">
+                    💡 หากคุณตั้งรหัสผ่าน PIN ไว้บนบัญชี ให้ป้อนรหัส 4 หลักเพื่อเข้าสู่ระบบ
+                  </span>
+                </div>
+
+                {directLoginError && (
+                  <div className="text-xs font-bold text-rose-400 bg-rose-500/10 p-3 rounded-2xl border border-rose-500/30 animate-shake">
+                    ⚠️ {directLoginError}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={!directUsername.trim() || isCloudSyncing}
+                  className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-cyan-500 to-lime-400 hover:brightness-110 text-slate-950 font-black text-sm transition-all shadow-xl shadow-cyan-500/25 flex items-center justify-center space-x-2 active:scale-95 disabled:opacity-40 cursor-pointer"
+                >
+                  <Key className="w-4 h-4 stroke-[3]" />
+                  <span>เข้าสู่ระบบทันที (Log In)</span>
+                  <ArrowRight className="w-4 h-4 stroke-[3]" />
+                </button>
+              </form>
+            )}
+
+            {/* SUBTAB 2: ACCOUNT LIST GRID */}
+            {loginSubTab === 'LIST' && (
+              <div className="space-y-3">
+                {usersList.map((user) => {
+                  const rank = getUserRank(user.id);
+                  const isPinProtected = user.hasPin;
+
+                  return (
+                    <div
+                      key={user.id}
+                      onClick={() => handleSelectUser(user)}
+                      className="glass-panel border-slate-800 hover:border-cyan-500/60 rounded-3xl p-4 sm:p-5 flex items-center justify-between cursor-pointer transition-all duration-300 hover:-translate-y-1 group shadow-xl bg-gradient-to-r from-[#131722] via-[#131722] to-slate-950"
+                    >
+                      <div className="flex items-center space-x-4 min-w-0">
+                        {/* Avatar */}
+                        <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl bg-slate-950 border border-slate-700 flex items-center justify-center text-3xl shrink-0 group-hover:scale-105 transition-transform shadow-inner">
+                          <span>{user.avatar || '🏋️‍♂️'}</span>
+                        </div>
+
+                        {/* Info */}
+                        <div className="min-w-0">
+                          <div className="flex items-center space-x-2">
+                            <h3 className="text-base sm:text-lg font-black text-white group-hover:text-cyan-300 transition-colors truncate">
+                              {user.name}
+                            </h3>
+                            <span className={`text-[9px] font-black px-2 py-0.5 rounded-full bg-gradient-to-r ${rank.badgeBg} shrink-0`}>
+                              {rank.icon} {rank.title}
+                            </span>
+                          </div>
+                          <p className="text-xs text-slate-400 mt-1 flex items-center space-x-2">
+                            <span>{user.gender === 'FEMALE' ? '👩 หญิง' : '👨 ชาย'}</span>
+                            <span>•</span>
+                            <span>{user.weightKg} kg</span>
+                            <span>•</span>
+                            <span>ฝึก {user.targetDaysPerWeek || 4} วัน/สัปดาห์</span>
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Prominent Login Button */}
+                      <div className="flex items-center space-x-2 shrink-0 pl-2">
+                        {isPinProtected ? (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSelectUser(user);
+                            }}
+                            className="px-3.5 py-2.5 rounded-2xl bg-purple-500/20 hover:bg-purple-500 text-purple-300 hover:text-white border border-purple-500/40 text-xs font-black transition-all flex items-center space-x-1.5 shadow-md active:scale-95"
+                          >
+                            <Lock className="w-4 h-4" />
+                            <span>ใส่ PIN เข้าสู่ระบบ</span>
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSelectUser(user);
+                            }}
+                            className="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-cyan-500 to-lime-400 hover:brightness-110 text-slate-950 text-xs font-black transition-all flex items-center space-x-1.5 shadow-lg shadow-cyan-500/20 active:scale-95 group-hover:scale-105"
+                          >
+                            <span>เข้าสู่ระบบ</span>
+                            <ArrowRight className="w-4 h-4 stroke-[3]" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
 
             {/* Bottom Actions */}
             <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
