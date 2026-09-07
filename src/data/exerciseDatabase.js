@@ -21,7 +21,7 @@ export const EQUIPMENT_TYPES = {
   ROPE: 'Battle Rope',
 };
 
-export const EXERCISE_DATABASE = [
+const RAW_EXERCISE_DATABASE = [
   // ==================== 1. อกกลาง (Mid Chest) ====================
   {
     id: 'barbell-bench-press',
@@ -725,3 +725,8 @@ export const EXERCISE_IMAGE_MAP = {
   'pull-ups': '/exercises/pull_ups.jpg',
   'crunches': '/exercises/cable_crunch.jpg',
 };
+
+export const EXERCISE_DATABASE = RAW_EXERCISE_DATABASE.map((ex) => ({
+  ...ex,
+  imageUrl: ex.imageUrl || EXERCISE_IMAGE_MAP[ex.id] || `/exercises/${ex.id.replace(/-/g, '_')}.jpg`
+}));

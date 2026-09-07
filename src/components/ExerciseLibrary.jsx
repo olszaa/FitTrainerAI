@@ -31,44 +31,8 @@ import {
   HelpCircle,
   ImagePlus
 } from 'lucide-react';
-import { EXERCISE_DATABASE, EXERCISE_CATEGORIES, EQUIPMENT_TYPES } from '../data/exerciseDatabase';
+import { EXERCISE_DATABASE, EXERCISE_CATEGORIES, EQUIPMENT_TYPES, EXERCISE_IMAGE_MAP } from '../data/exerciseDatabase';
 import { getCustomExercises, saveCustomExercise, deleteCustomExercise } from '../utils/storage';
-
-const EXERCISE_IMAGE_MAP = {
-  // Push Group
-  'db-bench-press': '/exercises/db_bench_press.jpg',
-  'incline-barbell-press': '/exercises/incline_press.jpg',
-  'tricep-pushdown': '/exercises/tricep_pushdown.jpg',
-  'overhead-db-extension': '/exercises/overhead_db_extension.jpg',
-
-  // Pull Group
-  'lat-pulldown': '/exercises/lat_pulldown.jpg',
-  'seated-cable-row': '/exercises/seated_cable_row.jpg',
-  'chest-supported-db-row': '/exercises/chest_supported_db_row.jpg',
-  'barbell-curl': '/exercises/barbell_curl.jpg',
-  'db-hammer-curl': '/exercises/db_hammer_curl.jpg',
-
-  // Shoulders & Core Group
-  'seated-db-shoulder-press': '/exercises/seated_db_shoulder_press.jpg',
-  'lateral-raise': '/exercises/lateral_raise.jpg',
-  'front-raise': '/exercises/front_raise.jpg',
-  'db-front-raise': '/exercises/front_raise.jpg',
-  'rear-delt-fly': '/exercises/rear_delt_fly.jpg',
-  'cable-crunch': '/exercises/cable_crunch.jpg',
-  'plank': '/exercises/plank.jpg',
-
-  // Cardio Group
-  'battle-rope': '/exercises/battle_rope.jpg',
-  'battle-rope-cardio': '/exercises/battle_rope.jpg',
-  'cable-rowing-machine': '/exercises/cable_rowing.jpg',
-  'cable-rowing-cardio': '/exercises/cable_rowing.jpg',
-
-  // Legacy / Fallbacks
-  'bench-press': '/exercises/bench_press.jpg',
-  'push-ups': '/exercises/push_ups.jpg',
-  'pull-ups': '/exercises/pull_ups.jpg',
-  'crunches': '/exercises/cable_crunch.jpg',
-};
 
 const PRESET_ICONS = ['🏋️‍♂️', '🏋️‍♀️', '💪', '🤸‍♂️', '🏃‍♂️', '🚴‍♂️', '🧘‍♂️', '⚡', '🔥', '🏆', '🎯', '🥊'];
 
@@ -358,7 +322,7 @@ export default function ExerciseLibrary() {
       {/* Exercise Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {filteredExercises.map((ex) => {
-          const imgSrc = ex.imageUrl || EXERCISE_IMAGE_MAP[ex.id] || '/exercises/bench_press.jpg';
+          const imgSrc = ex.imageUrl || EXERCISE_IMAGE_MAP[ex.id] || (ex.id ? `/exercises/${ex.id.replace(/-/g, '_')}.jpg` : '');
           const theme = getGlowColorStyle(ex.category);
           const hasVideo = Boolean(ex.videoUrl);
 
@@ -370,7 +334,7 @@ export default function ExerciseLibrary() {
             >
               {/* Card Poster / Image */}
               <div className="relative aspect-[4/5] w-full overflow-hidden bg-black flex items-center justify-center">
-                {ex.imageUrl || EXERCISE_IMAGE_MAP[ex.id] ? (
+                {imgSrc ? (
                   <img
                     src={imgSrc}
                     alt={ex.nameTh || ex.name}
@@ -747,7 +711,7 @@ export default function ExerciseLibrary() {
 
       {/* Modal 2: Interactive Media (Video or Image) & Complete Instructions */}
       {selectedExercise && (() => {
-        const imgSrc = selectedExercise.imageUrl || EXERCISE_IMAGE_MAP[selectedExercise.id] || '/exercises/bench_press.jpg';
+        const imgSrc = selectedExercise.imageUrl || EXERCISE_IMAGE_MAP[selectedExercise.id] || (selectedExercise.id ? `/exercises/${selectedExercise.id.replace(/-/g, '_')}.jpg` : '');
         const theme = getGlowColorStyle(selectedExercise.category);
         const hasVideo = Boolean(selectedExercise.videoUrl);
 
@@ -765,7 +729,7 @@ export default function ExerciseLibrary() {
                     playsInline
                     className="max-h-full max-w-full object-contain object-center"
                   />
-                ) : selectedExercise.imageUrl || EXERCISE_IMAGE_MAP[selectedExercise.id] ? (
+                ) : imgSrc ? (
                   <div
                     onClick={() => setZoomLevel((prev) => (prev >= 2 ? 1 : Number((prev + 0.35).toFixed(2))))}
                     className="relative w-full h-full flex items-center justify-center cursor-zoom-in overflow-hidden"
