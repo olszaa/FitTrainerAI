@@ -95,6 +95,10 @@ export default function UserProfileModal({
   const [morphBmiDisplay, setMorphBmiDisplay] = useState(null);
   const [isCropSide, setIsCropSide] = useState(true);
 
+  // New User 3D Video State
+  const newUserVideoRef = useRef(null);
+  const [newUserVideoLoaded, setNewUserVideoLoaded] = useState(false);
+
   // Current user form state
   const [form, setForm] = useState({
     name: userProfile?.name || 'คุณยท',
@@ -171,6 +175,92 @@ export default function UserProfileModal({
   const bmiCategory = getBMICategory(bmi);
   const bmr = calculateBMR(form.weightKg, form.heightCm, form.age, form.gender);
   const tdee = calculateTDEE(bmr, 'MODERATE');
+
+  // Video sources and new user metrics
+  const videoSrc = form.gender === 'FEMALE' ? '/videos/FemaleMannequin.mp4' : '/videos/MaleMannequin.mp4';
+  const newUserBmi = calculateBMI(newUserForm.weightKg, newUserForm.heightCm);
+  const newUserBmiCategory = getBMICategory(newUserBmi);
+  const newUserVideoSrc = newUserForm.gender === 'FEMALE' ? '/videos/FemaleMannequin.mp4' : '/videos/MaleMannequin.mp4';
+
+  // Sync profile video seek position to BMI (range 10.0 to 60.0)
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !videoLoaded || isPlayingMorph) return;
+
+    const clampedBmi = Math.max(10, Math.min(60, bmi));
+    const duration = video.duration || 6.042;
+    const progress = (clampedBmi - 10) / 50;
+    const targetTime = Math.max(0.01, Math.min(duration - 0.05, progress * duration));
+
+    try {
+      video.currentTime = targetTime;
+      setMorphBmiDisplay(bmi);
+    } catch (e) {
+      console.warn('Video seek error:', e);
+    }
+  }, [bmi, form.gender, videoLoaded, isPlayingMorph, activeTab]);
+
+  // Sync new user creation video seek position
+  useEffect(() => {
+    const video = newUserVideoRef.current;
+    if (!video || !newUserVideoLoaded || !isCreatingUser) return;
+
+    const clampedBmi = Math.max(10, Math.min(60, newUserBmi));
+    const duration = video.duration || 6.042;
+    const progress = (clampedBmi - 10) / 50;
+    const targetTime = Math.max(0.01, Math.min(duration - 0.05, progress * duration));
+
+    try {
+      video.currentTime = targetTime;
+    } catch (e) {
+      console.warn('New user video seek error:', e);
+    }
+  }, [newUserBmi, newUserForm.gender, newUserVideoLoaded, isCreatingUser]);
+
+  // Animation morph loop (plays from BMI 10 to 60)
+  useEffect(() => {
+    let animFrame;
+    const video = videoRef.current;
+    if (!video) return;
+
+    if (isPlayingMorph) {
+      video.playbackRate = 1.0;
+      video.play().catch(() => {});
+
+      const updateMorphDisplay = () => {
+        if (!video) return;
+        const duration = video.duration || 6.042;
+        const currentProgress = video.currentTime / duration;
+        const calcBmi = (10 + currentProgress * 50).toFixed(1);
+        setMorphBmiDisplay(calcBmi);
+
+        if (video.ended || currentProgress >= 0.99) {
+          setIsPlayingMorph(false);
+        } else {
+          animFrame = requestAnimationFrame(updateMorphDisplay);
+        }
+      };
+
+      animFrame = requestAnimationFrame(updateMorphDisplay);
+    } else {
+      video.pause();
+    }
+
+    return () => {
+      if (animFrame) cancelAnimationFrame(animFrame);
+    };
+  }, [isPlayingMorph]);
+
+  const togglePlayMorph = () => {
+    if (isPlayingMorph) {
+      setIsPlayingMorph(false);
+    } else {
+      if (videoRef.current) {
+        videoRef.current.currentTime = 0.01;
+      }
+      setIsPlayingMorph(true);
+    }
+  };
 
   const userRank = getUserRank(userProfile?.id);
   const achievements = getUserAchievements(userProfile?.id);
@@ -406,6 +496,85 @@ export default function UserProfileModal({
                       <p className="text-[10px] text-slate-400">จำลองหุ่นตามค่าสรีระปัจจุบันของคุณ</p>
                     </div>
                   </div>
+
+                  <div className="flex items-center space-x-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsCropSide(!isCropSide)}
+                      className={`px-2.5 py-1 rounded-xl text-[10px] font-bold border transition-all flex items-center space-x-1 ${
+                        isCropSide
+                          ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300 font-extrabold'
+                          : 'bg-slate-900 border-slate-700 text-slate-400'
+                      }`}
+                    >
+                      <Crop className="w-3 h-3" />
+                      <span>{isCropSide ? '✂️ โฟกัสหุ่น' : '↔️ เต็มเฟรม'}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={togglePlayMorph}
+                      className={`px-3 py-1 rounded-xl text-[10px] font-black transition-all flex items-center space-x-1 shadow-md ${
+                        isPlayingMorph
+                          ? 'bg-amber-400 text-slate-950 animate-pulse'
+                          : 'bg-cyan-500 hover:bg-cyan-400 text-slate-950'
+                      }`}
+                    >
+                      {isPlayingMorph ? (
+                        <>
+                          <Pause className="w-3 h-3 fill-slate-950" />
+                          <span>หยุด</span>
+                        </>
+                      ) : (
+                        <>
+                          <Play className="w-3 h-3 fill-slate-950" />
+                          <span>▶️ ชม Morph</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* 3D Mannequin Video Canvas */}
+                <div className="relative rounded-2xl overflow-hidden bg-black/95 border border-slate-800 flex items-center justify-center shadow-inner my-3 h-[240px] sm:h-[270px] w-full">
+                  {/* Sci-Fi HUD Overlay */}
+                  <div className="absolute top-2.5 left-2.5 z-20 flex items-center space-x-1.5 text-[9px] font-black tracking-widest text-cyan-400 bg-slate-950/80 px-2.5 py-1 rounded-lg border border-cyan-500/30 backdrop-blur-sm pointer-events-none">
+                    <Sparkles className="w-3 h-3 animate-spin text-cyan-400" />
+                    <span>3D ANATOMY MORPH // {isCropSide ? 'CROPPED FOCUS' : 'FULL FRAME'}</span>
+                  </div>
+
+                  <div className="absolute top-2.5 right-2.5 z-20 flex items-center space-x-1.5 text-[10px] font-extrabold bg-slate-950/80 px-2.5 py-1 rounded-lg border border-slate-700 backdrop-blur-sm pointer-events-none">
+                    <span className="text-slate-400">BMI:</span>
+                    <span className="text-cyan-400 font-black text-xs">
+                      {isPlayingMorph ? (morphBmiDisplay || 10) : bmi}
+                    </span>
+                    <span className="text-[9px] px-1.5 py-0.2 rounded font-bold bg-cyan-500/20 text-cyan-300">
+                      {bmiCategory.category}
+                    </span>
+                  </div>
+
+                  <video
+                    ref={videoRef}
+                    key={videoSrc}
+                    src={videoSrc}
+                    preload="auto"
+                    playsInline
+                    muted
+                    onLoadedMetadata={() => {
+                      setVideoLoaded(true);
+                      if (videoRef.current) {
+                        const duration = videoRef.current.duration || 6.042;
+                        const clampedBmi = Math.max(10, Math.min(60, bmi));
+                        const progress = (clampedBmi - 10) / 50;
+                        videoRef.current.currentTime = Math.max(0.01, progress * duration);
+                      }
+                    }}
+                    className={`w-full h-full cursor-pointer transition-all duration-500 ${
+                      isCropSide
+                        ? 'object-cover object-center scale-[1.14]'
+                        : 'object-contain object-center scale-100'
+                    }`}
+                    onClick={togglePlayMorph}
+                  />
                 </div>
 
                 {/* BMI Stats Cards */}
@@ -1133,6 +1302,42 @@ export default function UserProfileModal({
                         className="w-full bg-slate-900 border border-slate-700 text-center font-bold text-amber-300 rounded-lg py-1.5 text-xs outline-none"
                       />
                     </div>
+                  </div>
+
+                  {/* 3D Mannequin Video Visualizer Preview for New Member */}
+                  <div className="relative rounded-2xl overflow-hidden bg-black/95 border border-amber-500/40 flex items-center justify-center shadow-inner my-2 h-[220px] sm:h-[250px] w-full">
+                    {/* HUD Watermark */}
+                    <div className="absolute top-2.5 left-2.5 z-20 flex items-center space-x-1.5 text-[9px] font-black tracking-widest text-amber-400 bg-slate-950/80 px-2 py-0.5 rounded-lg border border-amber-500/30 backdrop-blur-sm pointer-events-none">
+                      <Sparkles className="w-3 h-3 animate-spin text-amber-400" />
+                      <span>3D ANATOMY PREVIEW // {newUserForm.gender === 'FEMALE' ? 'FEMALE' : 'MALE'}</span>
+                    </div>
+
+                    <div className="absolute top-2.5 right-2.5 z-20 flex items-center space-x-1.5 text-[10px] font-extrabold bg-slate-950/80 px-2.5 py-0.5 rounded-lg border border-slate-700 backdrop-blur-sm pointer-events-none">
+                      <span className="text-slate-400">BMI จำลอง:</span>
+                      <span className="text-amber-400 font-black text-xs">{newUserBmi}</span>
+                      <span className="text-[9px] px-1.5 py-0.2 rounded font-bold bg-amber-400/20 text-amber-300">
+                        {newUserBmiCategory.category}
+                      </span>
+                    </div>
+
+                    <video
+                      ref={newUserVideoRef}
+                      key={newUserVideoSrc}
+                      src={newUserVideoSrc}
+                      preload="auto"
+                      playsInline
+                      muted
+                      onLoadedMetadata={() => {
+                        setNewUserVideoLoaded(true);
+                        if (newUserVideoRef.current) {
+                          const duration = newUserVideoRef.current.duration || 6.042;
+                          const clampedBmi = Math.max(10, Math.min(60, newUserBmi));
+                          const progress = (clampedBmi - 10) / 50;
+                          newUserVideoRef.current.currentTime = Math.max(0.01, progress * duration);
+                        }
+                      }}
+                      className="w-full h-full object-cover object-center scale-[1.12]"
+                    />
                   </div>
 
                   {/* Actions */}
