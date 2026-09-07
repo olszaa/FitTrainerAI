@@ -685,7 +685,7 @@ export const EXERCISE_IMAGE_MAP = {
   'kettlebell-floor-press': '/exercises/db_bench_press.jpg',
   'incline-barbell-press': '/exercises/incline_press.jpg',
   'incline-db-bench-press': '/exercises/incline_db_bench_press.jpg',
-  'incline-db-fly': '/exercises/incline_db_bench_press.jpg',
+  'incline-db-fly': '/exercises/incline_db_fly.jpg',
   'low-to-high-cable-fly': '/exercises/low_to_high_cable_fly.jpg',
   'high-to-low-cable-fly': '/exercises/high_to_low_cable_fly.jpg',
   'decline-db-press': '/exercises/db_bench_press.jpg',
