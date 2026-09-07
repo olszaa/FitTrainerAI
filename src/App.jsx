@@ -27,7 +27,7 @@ import {
 } from './utils/storage';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState('gym'); // 'gym' | 'home' | 'plans' | 'heatmap' | 'library' | 'analytics'
+  const [activeTab, setActiveTab] = useState('body'); // Default tab set to 'body' (สรีระ & กล้ามเนื้อ)
   
   // Auth & Session State
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
@@ -66,12 +66,14 @@ export default function App() {
     setUserProfile(getUserProfile(newUserId));
     setWorkoutLogs(getWorkoutLogs(newUserId));
     setActiveWorkout(null);
+    setActiveTab('body');
   };
 
   const handleLoginSuccess = (userId) => {
     setAuthSession(userId);
     doSwitchUser(userId);
     setIsAuthenticated(true);
+    setActiveTab('body');
   };
 
   const handleLogout = () => {
