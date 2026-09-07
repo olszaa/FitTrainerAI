@@ -813,32 +813,18 @@ export default function LoginScreen({
                 />
               </div>
 
-              {/* Goal & Optional PIN */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-slate-300 font-bold mb-1">เป้าหมายหลัก</label>
-                  <select
-                    value={registerForm.goal}
-                    onChange={(e) => setRegisterForm({ ...registerForm, goal: e.target.value })}
-                    className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-3 py-2 outline-none cursor-pointer"
-                  >
-                    <option value="MUSCLE_BUILDING">🏋️‍♂️ สร้างกล้ามเนื้อ (Build Muscle)</option>
-                    <option value="WEIGHT_LOSS">🔥 ลดน้ำหนัก / กระชับสัดส่วน</option>
-                    <option value="MAINTAIN">⚡ เพิ่มความแข็งแรงทนทาน</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-slate-300 font-bold mb-1">ตั้งรหัสผ่าน PIN 4 หลัก (ถ้ามี)</label>
-                  <input
-                    type="password"
-                    maxLength={4}
-                    placeholder="รหัส PIN 4 หลัก (ไม่บังคับ)"
-                    value={registerForm.pinCode}
-                    onChange={(e) => setRegisterForm({ ...registerForm, pinCode: e.target.value.replace(/\D/g, '') })}
-                    className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-3 py-2 outline-none font-mono tracking-widest"
-                  />
-                </div>
+              {/* Goal Selection */}
+              <div>
+                <label className="block text-slate-300 font-bold mb-1">เป้าหมายหลักในการออกกำลังกาย</label>
+                <select
+                  value={registerForm.goal}
+                  onChange={(e) => setRegisterForm({ ...registerForm, goal: e.target.value })}
+                  className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-3.5 py-2.5 outline-none cursor-pointer font-bold"
+                >
+                  <option value="MUSCLE_BUILDING">🏋️‍♂️ สร้างกล้ามเนื้อ (Build Muscle)</option>
+                  <option value="WEIGHT_LOSS">🔥 ลดน้ำหนัก / กระชับสัดส่วน (Weight Loss)</option>
+                  <option value="MAINTAIN">⚡ เพิ่มความแข็งแรงทนทาน (Strength & Maintenance)</option>
+                </select>
               </div>
 
               {/* Actions */}
