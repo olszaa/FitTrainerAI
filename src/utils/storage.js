@@ -237,7 +237,7 @@ export const syncCloudProfilesToLocal = async () => {
       userMap.set(cp.id, {
         ...userMap.get(cp.id),
         ...cp,
-        hasPin: Boolean(cp.pinCode && String(cp.pinCode).trim().length === 4)
+        hasPin: Boolean(cp.pinCode && String(cp.pinCode).trim().length > 0)
       });
       const profileKey = `fittrainer_user_profile_${cp.id}`;
       if (!localStorage.getItem(profileKey)) {
@@ -420,7 +420,7 @@ export const saveUserProfile = (profile, userId = getActiveUserId()) => {
       targetWeightKg: profileToSave.targetWeightKg,
       goal: profileToSave.goal,
       streakDays: profileToSave.streakDays,
-      hasPin: Boolean(profileToSave.pinCode && profileToSave.pinCode.trim().length === 4),
+      hasPin: Boolean(profileToSave.pinCode && profileToSave.pinCode.trim().length > 0),
     };
     localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(users));
   }
@@ -653,7 +653,7 @@ export const importUserData = (jsonData, targetUserId = getActiveUserId()) => {
       targetWeightKg: profileToSave.targetWeightKg,
       goal: profileToSave.goal,
       streakDays: profileToSave.streakDays || 1,
-      hasPin: Boolean(profileToSave.pinCode && profileToSave.pinCode.trim().length === 4)
+      hasPin: Boolean(profileToSave.pinCode && profileToSave.pinCode.trim().length > 0)
     };
   } else {
     users.push({
@@ -664,7 +664,7 @@ export const importUserData = (jsonData, targetUserId = getActiveUserId()) => {
       targetWeightKg: profileToSave.targetWeightKg,
       goal: profileToSave.goal,
       streakDays: profileToSave.streakDays || 1,
-      hasPin: Boolean(profileToSave.pinCode && profileToSave.pinCode.trim().length === 4)
+      hasPin: Boolean(profileToSave.pinCode && profileToSave.pinCode.trim().length > 0)
     });
   }
   localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(users));

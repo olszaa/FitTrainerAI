@@ -144,7 +144,7 @@ export default function LoginScreen({
 
     // Account found -> Check PIN requirement
     const profile = getUserProfile(match.id);
-    const hasPin = profile.pinCode && profile.pinCode.trim().length === 4;
+    const hasPin = profile.pinCode && profile.pinCode.trim().length > 0;
 
     if (hasPin) {
       if (!directPassword.trim()) {
@@ -152,7 +152,7 @@ export default function LoginScreen({
         setSyncStatusMsg('');
         setSelectedUser(match);
         setPinInput('');
-        setPinError('บัญชีนี้ตั้งรหัสผ่าน PIN ไว้ กรุณาป้อน PIN 4 หลักเพื่อเข้าใช้งาน');
+        setPinError('บัญชีนี้ตั้งรหัสผ่านไว้ กรุณาป้อนรหัสผ่านเพื่อเข้าใช้งาน');
         setView('ENTER_PIN');
         return;
       }
@@ -160,7 +160,7 @@ export default function LoginScreen({
       if (!verifyUserPin(match.id, directPassword.trim())) {
         setIsCloudSyncing(false);
         setSyncStatusMsg('');
-        setDirectLoginError('รหัสผ่าน PIN ไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง');
+        setDirectLoginError('รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง');
         return;
       }
     }
@@ -172,7 +172,7 @@ export default function LoginScreen({
   const handleSelectUser = async (user) => {
     setSelectedUser(user);
     const profile = getUserProfile(user.id);
-    if (profile.pinCode && profile.pinCode.trim().length === 4) {
+    if (profile.pinCode && profile.pinCode.trim().length > 0) {
       // User has PIN code -> Go to PIN entry screen
       setPinInput('');
       setPinError('');
@@ -362,24 +362,23 @@ export default function LoginScreen({
 
                 <div className="space-y-1.5">
                   <label className="block text-slate-200 font-extrabold text-xs">
-                    รหัสผ่าน / PIN 4 หลัก (Password / PIN)
+                    รหัสผ่าน (Password)
                   </label>
                   <div className="relative">
                     <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-400" />
                     <input
                       type="password"
-                      maxLength={4}
-                      placeholder="รหัสผ่าน PIN 4 หลัก (ถ้ามี)"
+                      placeholder="กรอกรหัสผ่านของคุณ (ถ้ามี)..."
                       value={directPassword}
                       onChange={(e) => {
-                        setDirectPassword(e.target.value.replace(/\D/g, ''));
+                        setDirectPassword(e.target.value);
                         setDirectLoginError('');
                       }}
-                      className="w-full bg-slate-900/90 border border-slate-700 text-white rounded-2xl pl-10 pr-4 py-3 outline-none focus:border-purple-400 font-mono tracking-widest font-bold text-sm shadow-inner"
+                      className="w-full bg-slate-900/90 border border-slate-700 text-white rounded-2xl pl-10 pr-4 py-3 outline-none focus:border-purple-400 font-bold text-sm shadow-inner"
                     />
                   </div>
                   <span className="text-[10px] text-slate-400 block pt-0.5">
-                    💡 หากคุณตั้งรหัสผ่าน PIN ไว้บนบัญชี ให้ป้อนรหัส 4 หลักเพื่อเข้าสู่ระบบ
+                    💡 หากคุณตั้งรหัสผ่านไว้บนบัญชี ให้กรอกรหัสผ่านเพื่อเข้าสู่ระบบ
                   </span>
                 </div>
 
