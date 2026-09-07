@@ -25,7 +25,8 @@ import {
   setAuthSession,
   clearAuthSession,
   syncCloudProfilesToLocal,
-  syncUserDataFromCloudToLocal
+  syncUserDataFromCloudToLocal,
+  syncProfileToSupabase
 } from './utils/storage';
 
 export default function App() {
@@ -50,6 +51,13 @@ export default function App() {
   // Sync cloud profiles on app mount so all registered accounts are available across devices
   useEffect(() => {
     const fetchCloudProfiles = async () => {
+      // Auto-push any local profiles to Supabase Cloud
+      const localUsers = getUsersList();
+      localUsers.forEach((u) => {
+        const prof = getUserProfile(u.id);
+        if (prof) syncProfileToSupabase(prof);
+      });
+
       const mergedUsers = await syncCloudProfilesToLocal();
       if (mergedUsers) {
         setUsersList(mergedUsers);

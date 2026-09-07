@@ -21,7 +21,8 @@ import {
   getUserRank,
   createNewUser,
   syncCloudProfilesToLocal,
-  syncUserDataFromCloudToLocal
+  syncUserDataFromCloudToLocal,
+  searchProfileFromSupabase
 } from '../utils/storage';
 import {
   calculateBMI,
@@ -131,13 +132,23 @@ export default function LoginScreen({
 
     const searchName = directUsername.trim().toLowerCase();
     const allUsers = cloudUsers || usersList;
-    const match = allUsers.find(
+    let match = allUsers.find(
       (u) =>
         (u.username && u.username.trim().toLowerCase() === searchName) ||
         (u.name && u.name.trim().toLowerCase() === searchName) ||
         (u.email && u.email.trim().toLowerCase() === searchName) ||
         (u.id && u.id.trim().toLowerCase() === searchName)
     );
+
+    if (!match) {
+      // Direct deep search query on Supabase Cloud
+      const cloudMatches = await searchProfileFromSupabase(directUsername);
+      if (cloudMatches && cloudMatches.length > 0) {
+        match = cloudMatches[0];
+        await syncCloudProfilesToLocal();
+        if (onRefreshUsers) onRefreshUsers();
+      }
+    }
 
     if (!match) {
       setIsCloudSyncing(false);

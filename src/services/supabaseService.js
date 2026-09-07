@@ -28,14 +28,40 @@ export const syncProfileToSupabase = async (profile) => {
   const client = getSupabaseClient();
   if (!client) return null;
 
+  const payload = {
+    id: profile.id,
+    username: profile.username || profile.name || null,
+    name: profile.name,
+    email: profile.email || null,
+    avatar: profile.avatar || '🏋️‍♂️',
+    custom_avatar_url: profile.customAvatarUrl || null,
+    gender: profile.gender || 'MALE',
+    age: Number(profile.age) || 28,
+    weight_kg: Number(profile.weightKg) || 72,
+    target_weight_kg: Number(profile.targetWeightKg) || 75,
+    height_cm: Number(profile.heightCm) || 175,
+    goal: profile.goal || 'MUSCLE_BUILDING',
+    gym_level: profile.gymLevel || 'INTERMEDIATE',
+    target_days_per_week: Number(profile.targetDaysPerWeek) || 4,
+    streak_days: Number(profile.streakDays) || 1,
+    pin_code: profile.pinCode || null,
+    motto: profile.motto || null,
+    favorite_muscle: profile.favoriteMuscle || null,
+    weight_history: profile.weightHistory || [],
+    updated_at: new Date().toISOString()
+  };
+
   try {
-    const payload = {
+    const { data, error } = await client.from('profiles').upsert(payload).select();
+    if (!error && data) return data;
+
+    console.warn('Supabase Full Profile Sync Warning:', error?.message);
+
+    // Fallback: Core payload without username/email if columns do not exist in DB schema
+    const corePayload = {
       id: profile.id,
-      username: profile.username || profile.name || null,
       name: profile.name,
-      email: profile.email || null,
       avatar: profile.avatar || '🏋️‍♂️',
-      custom_avatar_url: profile.customAvatarUrl || null,
       gender: profile.gender || 'MALE',
       age: Number(profile.age) || 28,
       weight_kg: Number(profile.weightKg) || 72,
@@ -46,19 +72,57 @@ export const syncProfileToSupabase = async (profile) => {
       target_days_per_week: Number(profile.targetDaysPerWeek) || 4,
       streak_days: Number(profile.streakDays) || 1,
       pin_code: profile.pinCode || null,
-      motto: profile.motto || null,
-      favorite_muscle: profile.favoriteMuscle || null,
-      weight_history: profile.weightHistory || [],
       updated_at: new Date().toISOString()
     };
-
-    const { data, error } = await client.from('profiles').upsert(payload).select();
-    if (error) console.warn('Supabase Profile Sync Error:', error.message);
-    return data;
+    const { data: coreData, error: coreError } = await client.from('profiles').upsert(corePayload).select();
+    if (coreError) console.warn('Supabase Core Profile Sync Error:', coreError.message);
+    return coreData;
   } catch (e) {
     console.warn('Supabase Profile Sync Exception:', e);
     return null;
   }
+};
+
+export const searchProfileFromSupabase = async (queryText) => {
+  if (!isSupabaseConfigured() || !queryText?.trim()) return [];
+  const client = getSupabaseClient();
+  if (!client) return [];
+
+  const search = queryText.trim().toLowerCase();
+
+  try {
+    const { data, error } = await client
+      .from('profiles')
+      .select('*')
+      .or(`name.ilike.%${search}%,id.eq.${search}`);
+
+    if (!error && data && data.length > 0) {
+      return data.map((d) => ({
+        id: d.id,
+        username: d.username || d.name,
+        name: d.name,
+        email: d.email || '',
+        avatar: d.avatar || '🏋️‍♂️',
+        customAvatarUrl: d.custom_avatar_url,
+        gender: d.gender,
+        age: d.age,
+        weightKg: d.weight_kg,
+        targetWeightKg: d.target_weight_kg,
+        heightCm: d.height_cm,
+        goal: d.goal,
+        gymLevel: d.gym_level,
+        targetDaysPerWeek: d.target_days_per_week,
+        streakDays: d.streak_days,
+        pinCode: d.pin_code,
+        motto: d.motto,
+        favoriteMuscle: d.favorite_muscle,
+        weightHistory: d.weight_history || []
+      }));
+    }
+  } catch (e) {
+    console.warn('searchProfileFromSupabase error:', e);
+  }
+  return [];
 };
 
 export const fetchProfileFromSupabase = async (userId) => {

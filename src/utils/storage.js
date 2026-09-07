@@ -8,8 +8,11 @@ import {
   fetchProfileFromSupabase,
   fetchWorkoutLogsFromSupabase,
   fetchCustomPlansFromSupabase,
-  fetchCustomExercisesFromSupabase
+  fetchCustomExercisesFromSupabase,
+  searchProfileFromSupabase
 } from '../services/supabaseService';
+
+export { syncProfileToSupabase, searchProfileFromSupabase };
 
 const STORAGE_KEY_USERS = 'fittrainer_users_list';
 const STORAGE_KEY_ACTIVE_USER = 'fittrainer_active_user_id';
