@@ -678,16 +678,16 @@ export const EXERCISE_DATABASE = [
 
 export const EXERCISE_IMAGE_MAP = {
   // Push Group (Chest Exercises)
-  'barbell-bench-press': '/exercises/bench_press.jpg',
+  'barbell-bench-press': '/exercises/barbell_bench_press.jpg',
   'db-bench-press': '/exercises/db_bench_press.jpg',
-  'db-chest-fly': '/exercises/db_bench_press.jpg',
-  'standing-cable-chest-fly': '/exercises/seated_cable_row.jpg',
+  'db-chest-fly': '/exercises/db_chest_fly.jpg',
+  'standing-cable-chest-fly': '/exercises/standing_cable_chest_fly.jpg',
   'kettlebell-floor-press': '/exercises/db_bench_press.jpg',
   'incline-barbell-press': '/exercises/incline_press.jpg',
   'incline-db-bench-press': '/exercises/incline_press.jpg',
   'incline-db-fly': '/exercises/incline_press.jpg',
-  'low-to-high-cable-fly': '/exercises/incline_press.jpg',
-  'high-to-low-cable-fly': '/exercises/tricep_pushdown.jpg',
+  'low-to-high-cable-fly': '/exercises/low_to_high_cable_fly.jpg',
+  'high-to-low-cable-fly': '/exercises/high_to_low_cable_fly.jpg',
   'decline-db-press': '/exercises/db_bench_press.jpg',
   'incline-push-up': '/exercises/plank.jpg',
   'hex-press': '/exercises/db_bench_press.jpg',
