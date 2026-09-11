@@ -198,6 +198,25 @@ export const fetchAllProfilesFromSupabase = async () => {
   }
 };
 
+export const deleteProfileFromSupabase = async (userId) => {
+  if (!isSupabaseConfigured() || !userId) return false;
+  const client = getSupabaseClient();
+  if (!client) return false;
+
+  try {
+    await Promise.all([
+      client.from('workout_logs').delete().eq('user_id', userId),
+      client.from('custom_plans').delete().eq('user_id', userId),
+      client.from('custom_exercises').delete().eq('user_id', userId),
+      client.from('profiles').delete().eq('id', userId)
+    ]);
+    return true;
+  } catch (e) {
+    console.warn('deleteProfileFromSupabase error:', e);
+    return false;
+  }
+};
+
 // --- Workout Logs Cloud Sync ---
 export const syncWorkoutLogToSupabase = async (log, userId) => {
   if (!isSupabaseConfigured() || !log?.id) return null;

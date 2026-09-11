@@ -9,7 +9,8 @@ import {
   fetchWorkoutLogsFromSupabase,
   fetchCustomPlansFromSupabase,
   fetchCustomExercisesFromSupabase,
-  searchProfileFromSupabase
+  searchProfileFromSupabase,
+  deleteProfileFromSupabase
 } from '../services/supabaseService';
 
 export { syncProfileToSupabase, searchProfileFromSupabase };
@@ -311,7 +312,13 @@ export const deleteUser = (userId) => {
   localStorage.removeItem(`fittrainer_user_profile_${userId}`);
   localStorage.removeItem(`fittrainer_workout_logs_${userId}`);
   localStorage.removeItem(`fittrainer_custom_plans_${userId}`);
+  localStorage.removeItem(`fittrainer_custom_exercises_${userId}`);
   localStorage.removeItem(`fittrainer_ai_chat_${userId}`);
+
+  // Permanently delete profile and linked data from Supabase Cloud
+  deleteProfileFromSupabase(userId).catch((err) => {
+    console.warn('Supabase cloud user delete warning:', err);
+  });
 
   // If deleted user was active, switch to first user
   let activeId = getActiveUserId();
