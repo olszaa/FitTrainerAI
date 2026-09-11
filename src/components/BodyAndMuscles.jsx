@@ -27,7 +27,9 @@ import {
   ArrowRight,
   ChevronRight,
   Crop,
-  Maximize2
+  Maximize2,
+  Lock,
+  ShieldCheck
 } from 'lucide-react';
 import {
   calculateBMI,
@@ -52,6 +54,9 @@ export default function BodyAndMuscles({
 }) {
   const [subTab, setSubTab] = useState(initialSubTab); // 'PROFILE' | 'MUSCLES' | 'USERS'
   const [successMsg, setSuccessMsg] = useState('');
+  const [isAdminAuth, setIsAdminAuth] = useState(() => sessionStorage.getItem('fittrainer_admin_session') === 'true');
+  const [adminPassInput, setAdminPassInput] = useState('');
+  const [adminPassError, setAdminPassError] = useState('');
 
   // 3D Mannequin Video State
   const videoRef = useRef(null);
@@ -1105,27 +1110,90 @@ export default function BodyAndMuscles({
       {/* ========================================================================= */}
       {subTab === 'USERS' && (
         <div className="space-y-6 animate-fade-in">
-          <div className="glass-panel border-amber-400/30 rounded-3xl p-5 sm:p-6 bg-slate-900/80">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+          {!isAdminAuth ? (
+            <div className="glass-panel border-amber-400/40 rounded-3xl p-6 text-center space-y-4 max-w-md mx-auto my-6 bg-slate-900/90 shadow-2xl">
+              <div className="w-14 h-14 rounded-2xl bg-amber-400/10 border border-amber-400/30 text-amber-400 flex items-center justify-center mx-auto shadow-inner">
+                <Lock className="w-7 h-7 animate-pulse" />
+              </div>
               <div>
-                <h3 className="text-base sm:text-lg font-black text-white flex items-center space-x-2">
-                  <Users className="w-5 h-5 text-amber-400" />
-                  <span>จัดการโปรไฟล์ผู้ใช้ ({usersList.length} คนในเครื่องนี้)</span>
-                </h3>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  ข้อมูลการฝึก สถิติ แคลอรี และตารางฝึกจะถูกแยกเก็บอิสระตามแต่ละบุคคล
+                <h4 className="font-extrabold text-white text-base">เข้าสู่ระบบ Admin เพื่อจัดการสมาชิก</h4>
+                <p className="text-xs text-slate-400 mt-1">
+                  ต้องกรอกรหัสผ่านผู้ดูแลระบบ (Code010906) ก่อนเข้าถึงเมนูจัดการผู้ใช้
                 </p>
               </div>
-
-              <button
-                type="button"
-                onClick={() => setIsCreatingUser(!isCreatingUser)}
-                className="py-2 px-3.5 rounded-xl bg-amber-400 text-slate-950 font-black text-xs hover:bg-amber-300 transition-all flex items-center space-x-1.5 shadow-md active:scale-95"
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (adminPassInput.trim() === 'Code010906') {
+                    sessionStorage.setItem('fittrainer_admin_session', 'true');
+                    setIsAdminAuth(true);
+                    setAdminPassError('');
+                    setAdminPassInput('');
+                  } else {
+                    setAdminPassError('รหัสผ่าน Admin ไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง');
+                  }
+                }}
+                className="space-y-3"
               >
-                <Plus className="w-4 h-4" />
-                <span>{isCreatingUser ? 'ยกเลิก' : '+ เพิ่มผู้ใช้ใหม่'}</span>
-              </button>
+                <input
+                  type="password"
+                  placeholder="รหัสผ่าน Admin (Code010906)"
+                  value={adminPassInput}
+                  onChange={(e) => {
+                    setAdminPassInput(e.target.value);
+                    setAdminPassError('');
+                  }}
+                  className="w-full bg-slate-950 border border-slate-700 text-white text-center rounded-xl px-4 py-2.5 text-xs outline-none focus:border-amber-400 font-bold tracking-widest"
+                  autoFocus
+                />
+                {adminPassError && (
+                  <p className="text-xs text-rose-400 font-bold animate-bounce-short">{adminPassError}</p>
+                )}
+                <button
+                  type="submit"
+                  className="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-300 hover:brightness-110 text-slate-950 font-black text-xs shadow-md transition-all flex items-center justify-center space-x-1.5"
+                >
+                  <ShieldCheck className="w-4 h-4" />
+                  <span>🔓 ยืนยันปลดล็อก Admin</span>
+                </button>
+              </form>
             </div>
+          ) : (
+            <div className="glass-panel border-amber-400/30 rounded-3xl p-5 sm:p-6 bg-slate-900/80">
+              <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+                <div>
+                  <h3 className="text-base sm:text-lg font-black text-white flex items-center space-x-2">
+                    <Users className="w-5 h-5 text-amber-400" />
+                    <span>จัดการโปรไฟล์ผู้ใช้ ({usersList.length} คนในเครื่องนี้)</span>
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    ข้อมูลการฝึก สถิติ แคลอรี และตารางฝึกจะถูกแยกเก็บอิสระตามแต่ละบุคคล
+                  </p>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsCreatingUser(!isCreatingUser)}
+                    className="py-2 px-3.5 rounded-xl bg-amber-400 text-slate-950 font-black text-xs hover:bg-amber-300 transition-all flex items-center space-x-1.5 shadow-md active:scale-95"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>{isCreatingUser ? 'ยกเลิก' : '+ เพิ่มผู้ใช้ใหม่'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      sessionStorage.removeItem('fittrainer_admin_session');
+                      setIsAdminAuth(false);
+                    }}
+                    className="py-2 px-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-rose-400 text-xs font-bold border border-slate-700 transition-colors"
+                    title="ออกจากโหมด Admin"
+                  >
+                    🔒 ล็อก Admin
+                  </button>
+                </div>
+              </div>
 
             {/* Create New User Inline Form */}
             {isCreatingUser && (
@@ -1313,8 +1381,9 @@ export default function BodyAndMuscles({
               })}
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
+    )}
 
     </div>
   );

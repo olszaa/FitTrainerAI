@@ -81,6 +81,9 @@ export default function UserProfileModal({
 
   const [activeTab, setActiveTab] = useState(initialTab); // 'PROFILE' | 'ACHIEVEMENTS' | 'SECURITY' | 'SUPABASE' | 'USERS'
   const [successMsg, setSuccessMsg] = useState('');
+  const [isAdminAuth, setIsAdminAuth] = useState(() => sessionStorage.getItem('fittrainer_admin_session') === 'true');
+  const [adminPassInput, setAdminPassInput] = useState('');
+  const [adminPassError, setAdminPassError] = useState('');
   const fileInputRef = useRef(null);
 
   // Supabase Configuration State
@@ -1089,24 +1092,87 @@ export default function UserProfileModal({
           {/* ========================================================================= */}
           {activeTab === 'USERS' && (
             <div className="space-y-4 animate-fade-in">
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-400 font-bold uppercase tracking-wider text-[11px] flex items-center space-x-1.5">
-                    <Users className="w-3.5 h-3.5 text-lime-400" />
-                    <span>โปรไฟล์ผู้ใช้ในระบบทั้งหมด ({usersList.length} คน)</span>
-                  </span>
-
-                  {!isCreatingUser && (
+              {!isAdminAuth ? (
+                <div className="p-6 text-center bg-slate-900/90 rounded-3xl border border-amber-400/40 space-y-4 max-w-md mx-auto my-4 shadow-xl">
+                  <div className="w-14 h-14 rounded-2xl bg-amber-400/10 border border-amber-400/30 text-amber-400 flex items-center justify-center mx-auto shadow-inner">
+                    <Lock className="w-7 h-7 animate-pulse" />
+                  </div>
+                  <div>
+                    <h4 className="font-extrabold text-white text-base">เข้าสู่ระบบ Admin เพื่อจัดการสมาชิก</h4>
+                    <p className="text-xs text-slate-400 mt-1">
+                      ต้องกรอกรหัสผ่านผู้ดูแลระบบ (Code010906) ก่อนเข้าถึงเมนูนี้
+                    </p>
+                  </div>
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      if (adminPassInput.trim() === 'Code010906') {
+                        sessionStorage.setItem('fittrainer_admin_session', 'true');
+                        setIsAdminAuth(true);
+                        setAdminPassError('');
+                        setAdminPassInput('');
+                      } else {
+                        setAdminPassError('รหัสผ่าน Admin ไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง');
+                      }
+                    }}
+                    className="space-y-3"
+                  >
+                    <input
+                      type="password"
+                      placeholder="รหัสผ่าน Admin (Code010906)"
+                      value={adminPassInput}
+                      onChange={(e) => {
+                        setAdminPassInput(e.target.value);
+                        setAdminPassError('');
+                      }}
+                      className="w-full bg-slate-950 border border-slate-700 text-white text-center rounded-xl px-4 py-2.5 text-xs outline-none focus:border-amber-400 font-bold tracking-widest"
+                      autoFocus
+                    />
+                    {adminPassError && (
+                      <p className="text-xs text-rose-400 font-bold animate-bounce-short">{adminPassError}</p>
+                    )}
                     <button
-                      type="button"
-                      onClick={() => setIsCreatingUser(true)}
-                      className="px-3 py-1.5 rounded-xl bg-lime-400 hover:bg-lime-300 text-slate-950 font-black text-xs transition-all flex items-center space-x-1.5 shadow-md"
+                      type="submit"
+                      className="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-300 hover:brightness-110 text-slate-950 font-black text-xs shadow-md transition-all flex items-center justify-center space-x-1.5"
                     >
-                      <UserPlus className="w-3.5 h-3.5" />
-                      <span>+ เพิ่มผู้ใช้ใหม่</span>
+                      <ShieldCheck className="w-4 h-4" />
+                      <span>🔓 ยืนยันปลดล็อก Admin</span>
                     </button>
-                  )}
+                  </form>
                 </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-400 font-bold uppercase tracking-wider text-[11px] flex items-center space-x-1.5">
+                      <Users className="w-3.5 h-3.5 text-lime-400" />
+                      <span>โปรไฟล์ผู้ใช้ในระบบทั้งหมด ({usersList.length} คน)</span>
+                    </span>
+
+                    <div className="flex items-center space-x-2">
+                      {!isCreatingUser && (
+                        <button
+                          type="button"
+                          onClick={() => setIsCreatingUser(true)}
+                          className="px-3 py-1.5 rounded-xl bg-lime-400 hover:bg-lime-300 text-slate-950 font-black text-xs transition-all flex items-center space-x-1.5 shadow-md"
+                        >
+                          <UserPlus className="w-3.5 h-3.5" />
+                          <span>+ เพิ่มผู้ใช้ใหม่</span>
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          sessionStorage.removeItem('fittrainer_admin_session');
+                          setIsAdminAuth(false);
+                        }}
+                        className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-rose-400 text-xs font-bold border border-slate-700 transition-colors"
+                        title="ออกจากโหมด Admin"
+                      >
+                        🔒 ล็อก Admin
+                      </button>
+                    </div>
+                  </div>
 
                 <div className="grid grid-cols-1 gap-2.5">
                   {usersList.map((usr) => {
@@ -1190,7 +1256,6 @@ export default function UserProfileModal({
                     );
                   })}
                 </div>
-              </div>
 
               {/* Create New User Form */}
               {isCreatingUser && (
@@ -1377,6 +1442,8 @@ export default function UserProfileModal({
               )}
             </div>
           )}
+        </div>
+      )}
 
         </div>
 

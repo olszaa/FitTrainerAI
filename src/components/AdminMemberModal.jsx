@@ -31,7 +31,9 @@ export default function AdminMemberModal({
   if (!isOpen) return null;
 
   // Authentication State
-  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(() => {
+    return sessionStorage.getItem('fittrainer_admin_session') === 'true';
+  });
   const [adminPasswordInput, setAdminPasswordInput] = useState('');
   const [passError, setPassError] = useState('');
 
@@ -61,12 +63,18 @@ export default function AdminMemberModal({
   const handleVerifyPassword = (e) => {
     if (e) e.preventDefault();
     if (adminPasswordInput.trim() === ADMIN_PASSWORD_REQUIRED) {
+      sessionStorage.setItem('fittrainer_admin_session', 'true');
       setIsAdminAuthenticated(true);
       setPassError('');
       setAdminPasswordInput('');
     } else {
       setPassError('รหัสผ่าน Admin ไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง');
     }
+  };
+
+  const handleAdminLogout = () => {
+    sessionStorage.removeItem('fittrainer_admin_session');
+    setIsAdminAuthenticated(false);
   };
 
   const handleCreateSubmit = (e) => {
@@ -245,7 +253,7 @@ export default function AdminMemberModal({
 
                 <button
                   type="button"
-                  onClick={() => setIsAdminAuthenticated(false)}
+                  onClick={handleAdminLogout}
                   className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-rose-400 font-bold text-xs border border-slate-700 transition-colors flex items-center space-x-1"
                   title="ออกจากโหมด Admin"
                 >
