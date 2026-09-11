@@ -1237,12 +1237,12 @@ export default function UserProfileModal({
                             </span>
                           )}
 
-                          {usersList.length > 1 && !isActive && (
+                          {usersList.length >= 1 && (
                             <button
                               type="button"
-                              onClick={() => {
+                              onClick={async () => {
                                 if (window.confirm(`ต้องการลบโปรไฟล์ของ "${usr.name}" ใช่หรือไม่? ข้อมูลทั้งหมดของผู้ใช้นี้จะถูกลบอย่างถาวร`)) {
-                                  onDeleteUser(usr.id);
+                                  await onDeleteUser(usr.id);
                                 }
                               }}
                               className="p-2 rounded-xl text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"

@@ -153,12 +153,12 @@ export default function App() {
     doSwitchUser(newUser.id);
   };
 
-  const handleDeleteUser = (userIdToDelete) => {
+  const handleDeleteUser = async (userIdToDelete) => {
     try {
-      const { activeId, updatedUsers } = deleteUser(userIdToDelete);
+      const { activeId, updatedUsers } = await deleteUser(userIdToDelete);
       setUsersList(updatedUsers);
       setAuthSession(activeId);
-      doSwitchUser(activeId);
+      await doSwitchUser(activeId);
     } catch (e) {
       alert(e.message || 'ไม่สามารถลบผู้ใช้งานได้');
     }

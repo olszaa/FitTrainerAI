@@ -1336,12 +1336,12 @@ export default function BodyAndMuscles({
                           </div>
                         </div>
 
-                        {!isActive && usersList.length > 1 && (
+                        {usersList.length >= 1 && (
                           <button
                             type="button"
-                            onClick={() => {
+                            onClick={async () => {
                               if (confirm(`คุณแน่ใจว่าต้องการลบโปรไฟล์ "${usr.name}" หรือไม่?`)) {
-                                onDeleteUser(usr.id);
+                                await onDeleteUser(usr.id);
                               }
                             }}
                             className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"

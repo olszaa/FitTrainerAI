@@ -17,7 +17,26 @@ export { syncProfileToSupabase, searchProfileFromSupabase };
 
 const STORAGE_KEY_USERS = 'fittrainer_users_list';
 const STORAGE_KEY_ACTIVE_USER = 'fittrainer_active_user_id';
+const STORAGE_KEY_DELETED_USERS = 'fittrainer_deleted_user_ids';
 const DEFAULT_USER_ID = 'user-1';
+
+export const getDeletedUserIds = () => {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_DELETED_USERS);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    return [];
+  }
+};
+
+export const markUserAsDeleted = (userId) => {
+  if (!userId) return;
+  const list = getDeletedUserIds();
+  if (!list.includes(userId)) {
+    list.push(userId);
+    localStorage.setItem(STORAGE_KEY_DELETED_USERS, JSON.stringify(list));
+  }
+};
 
 // Sample initial mock logs
 const INITIAL_LOGS = [
@@ -232,12 +251,15 @@ export const syncCloudProfilesToLocal = async () => {
     const cloudProfiles = await fetchAllProfilesFromSupabase();
     if (!cloudProfiles || !cloudProfiles.length) return getUsersList();
 
-    const localUsers = getUsersList();
+    const deletedIds = new Set(getDeletedUserIds());
+    const localUsers = getUsersList().filter((u) => !deletedIds.has(u.id));
     const userMap = new Map();
 
     localUsers.forEach((u) => userMap.set(u.id, u));
 
     cloudProfiles.forEach((cp) => {
+      if (deletedIds.has(cp.id)) return; // Never restore deleted user!
+
       const mergedProfile = {
         ...userMap.get(cp.id),
         ...cp,
@@ -259,6 +281,9 @@ export const syncCloudProfilesToLocal = async () => {
 // Pull down user logs, plans, and custom exercises from Supabase to local device
 export const syncUserDataFromCloudToLocal = async (userId) => {
   if (!userId) return;
+  const deletedIds = new Set(getDeletedUserIds());
+  if (deletedIds.has(userId)) return null;
+
   try {
     const [profile, logs, plans, customExs] = await Promise.all([
       fetchProfileFromSupabase(userId),
@@ -299,16 +324,41 @@ export const syncUserDataFromCloudToLocal = async (userId) => {
   }
 };
 
-export const deleteUser = (userId) => {
+export const deleteUser = async (userId) => {
+  if (!userId) return { activeId: getActiveUserId(), updatedUsers: getUsersList() };
+
+  // Mark user ID as deleted so cloud sync will never restore it
+  markUserAsDeleted(userId);
+
   const users = getUsersList();
-  if (users.length <= 1) {
-    throw new Error('ไม่สามารถลบผู้ใช้งานคนสุดท้ายได้');
+  const updatedUsers = users.filter((u) => u.id !== userId);
+
+  // If no users left locally, create a default clean user
+  let finalUsers = updatedUsers;
+  if (finalUsers.length === 0) {
+    const defaultUser = {
+      id: 'user-' + Date.now(),
+      name: 'คุณยท (Fitness Explorer)',
+      avatar: '🏋️‍♂️',
+      gender: 'MALE',
+      age: 28,
+      weightKg: 72,
+      targetWeightKg: 75,
+      heightCm: 175,
+      goal: 'MUSCLE_BUILDING',
+      gymLevel: 'INTERMEDIATE',
+      targetDaysPerWeek: 4,
+      streakDays: 1,
+      createdAt: new Date().toISOString(),
+      weightHistory: [{ date: new Date().toISOString().slice(0, 10), weightKg: 72 }]
+    };
+    finalUsers = [defaultUser];
+    localStorage.setItem(`fittrainer_user_profile_${defaultUser.id}`, JSON.stringify(defaultUser));
   }
 
-  const updatedUsers = users.filter((u) => u.id !== userId);
-  localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(updatedUsers));
+  localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(finalUsers));
 
-  // Clean up scoped data
+  // Clean up scoped local data
   localStorage.removeItem(`fittrainer_user_profile_${userId}`);
   localStorage.removeItem(`fittrainer_workout_logs_${userId}`);
   localStorage.removeItem(`fittrainer_custom_plans_${userId}`);
@@ -316,18 +366,20 @@ export const deleteUser = (userId) => {
   localStorage.removeItem(`fittrainer_ai_chat_${userId}`);
 
   // Permanently delete profile and linked data from Supabase Cloud
-  deleteProfileFromSupabase(userId).catch((err) => {
+  try {
+    await deleteProfileFromSupabase(userId);
+  } catch (err) {
     console.warn('Supabase cloud user delete warning:', err);
-  });
+  }
 
-  // If deleted user was active, switch to first user
+  // If deleted user was active, switch to first available user
   let activeId = getActiveUserId();
-  if (activeId === userId) {
-    activeId = updatedUsers[0].id;
+  if (activeId === userId || !finalUsers.some((u) => u.id === activeId)) {
+    activeId = finalUsers[0].id;
     setActiveUserId(activeId);
   }
 
-  return { activeId, updatedUsers };
+  return { activeId, updatedUsers: finalUsers };
 };
 
 // --- Scoped Data APIs (Accepting optional userId) ---
