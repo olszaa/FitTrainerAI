@@ -180,21 +180,52 @@ export default function Navbar({
                         </div>
                       </button>
 
-                      <button
-                        onClick={() => {
-                          setUserDropdownOpen(false);
-                          if (onOpenAdmin) onOpenAdmin();
-                        }}
-                        className="w-full py-2 px-2.5 rounded-xl bg-gradient-to-r from-amber-400/20 via-amber-300/10 to-amber-500/20 hover:from-amber-400/30 hover:to-amber-500/30 text-amber-300 border border-amber-400/40 transition-all flex items-center justify-between group shadow-sm"
-                      >
-                        <div className="flex items-center space-x-2">
-                          <Lock className="w-3.5 h-3.5 text-amber-400 group-hover:rotate-12 transition-transform" />
-                          <span>👑 จัดการสมาชิก (Admin)</span>
-                        </div>
-                        <span className="text-[9px] px-1.5 py-0.2 rounded font-extrabold bg-amber-400/20 text-amber-300">
-                          Pass Protect
-                        </span>
-                      </button>
+                      {sessionStorage.getItem('fittrainer_admin_session') === 'true' ? (
+                        <>
+                          <button
+                            onClick={() => {
+                              setUserDropdownOpen(false);
+                              if (onOpenAdmin) onOpenAdmin();
+                            }}
+                            className="w-full py-2 px-2.5 rounded-xl bg-gradient-to-r from-amber-400/20 via-amber-300/10 to-amber-500/20 hover:from-amber-400/30 hover:to-amber-500/30 text-amber-300 border border-amber-400/40 transition-all flex items-center justify-between group shadow-sm"
+                          >
+                            <div className="flex items-center space-x-2">
+                              <Lock className="w-3.5 h-3.5 text-amber-400 group-hover:rotate-12 transition-transform" />
+                              <span>👑 จัดการสมาชิก (Admin)</span>
+                            </div>
+                            <span className="text-[9px] px-1.5 py-0.2 rounded font-extrabold bg-amber-400/20 text-amber-300">
+                              Active Mode
+                            </span>
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              sessionStorage.removeItem('fittrainer_admin_session');
+                              setUserDropdownOpen(false);
+                            }}
+                            className="w-full py-1.5 px-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-rose-400 border border-slate-800 transition-all flex items-center justify-center space-x-1.5"
+                          >
+                            <Lock className="w-3 h-3" />
+                            <span>🔒 ออกจากโหมด Admin</span>
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            setUserDropdownOpen(false);
+                            if (onOpenAdmin) onOpenAdmin();
+                          }}
+                          className="w-full py-2 px-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-amber-300 hover:text-amber-200 border border-slate-800 transition-all flex items-center justify-between group"
+                        >
+                          <div className="flex items-center space-x-2">
+                            <Lock className="w-3.5 h-3.5 text-amber-400" />
+                            <span>🔐 เข้าสู่ระบบ Admin</span>
+                          </div>
+                          <span className="text-[9px] px-1.5 py-0.2 rounded font-bold bg-amber-400/15 text-amber-300">
+                            Login
+                          </span>
+                        </button>
+                      )}
 
                       {onLogout && (
                         <button

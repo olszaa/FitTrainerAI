@@ -537,7 +537,7 @@ export default function AdminMemberModal({
         {/* Modal Footer */}
         <div className="pt-3 border-t border-slate-800 flex items-center justify-between shrink-0">
           <span className="text-[10px] text-slate-500 font-mono">
-            Admin Auth: Code010906
+            Admin Security Protected
           </span>
           <button
             type="button"

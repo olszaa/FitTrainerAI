@@ -1100,7 +1100,7 @@ export default function UserProfileModal({
                   <div>
                     <h4 className="font-extrabold text-white text-base">เข้าสู่ระบบ Admin เพื่อจัดการสมาชิก</h4>
                     <p className="text-xs text-slate-400 mt-1">
-                      ต้องกรอกรหัสผ่านผู้ดูแลระบบ (Code010906) ก่อนเข้าถึงเมนูนี้
+                      กรุณากรอกรหัสผ่านผู้ดูแลระบบเพื่อเข้าสู่เมนูจัดการสมาชิก
                     </p>
                   </div>
                   <form
@@ -1119,7 +1119,7 @@ export default function UserProfileModal({
                   >
                     <input
                       type="password"
-                      placeholder="รหัสผ่าน Admin (Code010906)"
+                      placeholder="รหัสผ่าน Admin"
                       value={adminPassInput}
                       onChange={(e) => {
                         setAdminPassInput(e.target.value);
