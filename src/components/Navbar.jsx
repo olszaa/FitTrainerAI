@@ -24,6 +24,7 @@ export default function Navbar({
   activeWorkout,
   onOpenAIChat,
   onOpenProfile,
+  onOpenAdmin,
   userProfile,
   usersList = [],
   activeUserId,
