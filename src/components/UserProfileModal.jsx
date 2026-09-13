@@ -325,14 +325,14 @@ export default function UserProfileModal({
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       try {
         const jsonData = JSON.parse(event.target?.result);
-        const imported = importUserData(jsonData, userProfile?.id);
+        const imported = await importUserData(jsonData, userProfile?.id);
         onSaveProfile(imported);
         setForm(imported);
-        setSuccessMsg(`นำเข้าข้อมูลของ "${imported.name}" เรียบร้อยแล้ว! 📤`);
-        setTimeout(() => setSuccessMsg(''), 3000);
+        setSuccessMsg(`นำเข้าข้อมูลและซิงค์ขึ้น Supabase Cloud เรียบร้อยแล้ว! 📤⚡`);
+        setTimeout(() => setSuccessMsg(''), 3500);
       } catch (err) {
         alert(err.message || 'ไม่สามารถอ่านไฟล์สำรองข้อมูลได้');
       }

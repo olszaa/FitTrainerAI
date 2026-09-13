@@ -257,7 +257,7 @@ export const saveWorkoutLog = (newLog, userId = getActiveUserId()) => {
   return updatedLogs;
 };
 
-export const importWorkoutLogs = (jsonData, userId = getActiveUserId()) => {
+export const importWorkoutLogs = async (jsonData, userId = getActiveUserId()) => {
   let logsToImport = [];
 
   if (Array.isArray(jsonData)) {
@@ -274,7 +274,8 @@ export const importWorkoutLogs = (jsonData, userId = getActiveUserId()) => {
     throw new Error('ไม่พบข้อมูลประวัติการออกกำลังกายในไฟล์ JSON นี้');
   }
 
-  const existingLogs = getWorkoutLogs(userId);
+  const effectiveUserId = userId || getActiveUserId();
+  const existingLogs = getWorkoutLogs(effectiveUserId);
   const existingMap = new Map();
 
   existingLogs.forEach((l) => {
@@ -282,19 +283,22 @@ export const importWorkoutLogs = (jsonData, userId = getActiveUserId()) => {
   });
 
   let newCount = 0;
+  const syncPromises = [];
+
   logsToImport.forEach((log) => {
     if (!log) return;
     const logId = log.id || `log-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
     const formattedLog = {
       ...log,
       id: logId,
+      user_id: effectiveUserId,
       date: log.date || new Date().toISOString(),
-      routineName: log.routineName || log.name || 'Workout Session',
+      routineName: log.routineName || log.routine_name || log.name || 'Workout Session',
       mode: log.mode || 'GYM',
-      durationMinutes: Number(log.durationMinutes) || 0,
-      caloriesBurned: Number(log.caloriesBurned) || 0,
-      totalTonnageKg: Number(log.totalTonnageKg) || 0,
-      exercises: Array.isArray(log.exercises) ? log.exercises : []
+      durationMinutes: Number(log.durationMinutes ?? log.duration_minutes) || 0,
+      caloriesBurned: Number(log.caloriesBurned ?? log.calories_burned) || 0,
+      totalTonnageKg: Number(log.totalTonnageKg ?? log.total_tonnage_kg) || 0,
+      exercises: Array.isArray(log.exercises) ? log.exercises : (Array.isArray(log.exercises_data) ? log.exercises_data : [])
     };
 
     if (!existingMap.has(logId)) {
@@ -303,15 +307,18 @@ export const importWorkoutLogs = (jsonData, userId = getActiveUserId()) => {
     existingMap.set(logId, formattedLog);
 
     // Sync to Supabase Cloud
-    syncWorkoutLogToSupabase(formattedLog, userId);
+    syncPromises.push(syncWorkoutLogToSupabase(formattedLog, effectiveUserId));
   });
+
+  // Wait for all logs to sync up to Supabase Cloud
+  await Promise.all(syncPromises);
 
   // Sort by date descending
   const mergedLogs = Array.from(existingMap.values()).sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
 
-  const key = `fittrainer_workout_logs_${userId}`;
+  const key = `fittrainer_workout_logs_${effectiveUserId}`;
   localStorage.setItem(key, JSON.stringify(mergedLogs));
 
   return { mergedLogs, count: logsToImport.length, newCount };
@@ -596,7 +603,7 @@ export const exportUserData = (userId = getActiveUserId()) => {
 };
 
 // --- User Data Restore (Import) ---
-export const importUserData = (jsonData, targetUserId = getActiveUserId()) => {
+export const importUserData = async (jsonData, targetUserId = getActiveUserId()) => {
   if (!jsonData || typeof jsonData !== 'object') {
     throw new Error('รูปแบบไฟล์ JSON ไม่ถูกต้อง');
   }
@@ -611,14 +618,34 @@ export const importUserData = (jsonData, targetUserId = getActiveUserId()) => {
   const profileToSave = { ...profile, id: userId };
 
   localStorage.setItem(`fittrainer_user_profile_${userId}`, JSON.stringify(profileToSave));
+
+  // Sync profile directly to Supabase Cloud
+  await syncProfileToSupabase(profileToSave);
+
   if (Array.isArray(workoutLogs)) {
-    localStorage.setItem(`fittrainer_workout_logs_${userId}`, JSON.stringify(workoutLogs));
+    const formattedLogs = workoutLogs.map((l) => ({
+      ...l,
+      user_id: userId,
+      routineName: l.routineName || l.routine_name || l.name || 'Workout Session',
+      durationMinutes: Number(l.durationMinutes ?? l.duration_minutes) || 0,
+      caloriesBurned: Number(l.caloriesBurned ?? l.calories_burned) || 0,
+      totalTonnageKg: Number(l.totalTonnageKg ?? l.total_tonnage_kg) || 0,
+      exercises: Array.isArray(l.exercises) ? l.exercises : (Array.isArray(l.exercises_data) ? l.exercises_data : [])
+    }));
+    localStorage.setItem(`fittrainer_workout_logs_${userId}`, JSON.stringify(formattedLogs));
+
+    // Upload each log to Supabase Cloud
+    await Promise.all(formattedLogs.map((log) => syncWorkoutLogToSupabase(log, userId)));
   }
+
   if (Array.isArray(customPlans)) {
     localStorage.setItem(`fittrainer_custom_plans_${userId}`, JSON.stringify(customPlans));
+    await Promise.all(customPlans.map((plan) => syncCustomPlanToSupabase(plan, userId)));
   }
+
   if (Array.isArray(customExercises)) {
     localStorage.setItem(`fittrainer_custom_exercises_${userId}`, JSON.stringify(customExercises));
+    await Promise.all(customExercises.map((ex) => syncCustomExerciseToSupabase(ex, userId)));
   }
 
   // Update Users summary list

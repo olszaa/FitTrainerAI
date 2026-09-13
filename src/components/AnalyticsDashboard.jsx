@@ -32,16 +32,16 @@ export default function AnalyticsDashboard({ workoutLogs = [], onClearHistory, o
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       try {
         const jsonData = JSON.parse(event.target?.result);
-        const { mergedLogs, count, newCount } = importWorkoutLogs(jsonData, activeUserId);
+        const { mergedLogs, count, newCount } = await importWorkoutLogs(jsonData, activeUserId);
         if (onUpdateLogs) {
           onUpdateLogs(mergedLogs);
         }
         setImportStatus({
           type: 'success',
-          text: `นำเข้าข้อมูลเรียบร้อยแล้ว (${count} รายการ, รายการใหม่ ${newCount} รายการ) ⚡`
+          text: `นำเข้าข้อมูลและบันทึกลง Supabase Cloud สำเร็จแล้ว (${count} รายการ, รายการใหม่ ${newCount} รายการ) ⚡`
         });
         setTimeout(() => setImportStatus(null), 5000);
       } catch (err) {

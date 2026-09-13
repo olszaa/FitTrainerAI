@@ -219,27 +219,32 @@ export const deleteProfileFromSupabase = async (userId) => {
 
 // --- Workout Logs Cloud Sync ---
 export const syncWorkoutLogToSupabase = async (log, userId) => {
-  if (!isSupabaseConfigured() || !log?.id) return null;
+  const effectiveUserId = userId || log?.user_id || log?.userId;
+  if (!isSupabaseConfigured() || !log?.id || !effectiveUserId) {
+    console.warn('syncWorkoutLogToSupabase: missing user_id or id', { log, userId });
+    return null;
+  }
   const client = getSupabaseClient();
   if (!client) return null;
 
   try {
     const payload = {
-      id: log.id,
-      user_id: userId,
+      id: String(log.id),
+      user_id: String(effectiveUserId),
       date: log.date || new Date().toISOString(),
-      routine_name: log.routineName || 'Workout Session',
+      routine_name: log.routineName || log.routine_name || 'Workout Session',
       mode: log.mode || 'GYM',
-      duration_minutes: log.durationMinutes || 0,
-      calories_burned: log.caloriesBurned || 0,
-      total_tonnage_kg: log.totalTonnageKg || 0,
-      exercises_data: log.exercises || []
+      duration_minutes: Number(log.durationMinutes ?? log.duration_minutes) || 0,
+      calories_burned: Number(log.caloriesBurned ?? log.calories_burned) || 0,
+      total_tonnage_kg: Number(log.totalTonnageKg ?? log.total_tonnage_kg) || 0,
+      exercises_data: Array.isArray(log.exercises) ? log.exercises : (Array.isArray(log.exercises_data) ? log.exercises_data : [])
     };
 
     const { data, error } = await client.from('workout_logs').upsert(payload).select();
-    if (error) console.warn('Supabase Workout Log Sync Error:', error.message);
+    if (error) console.error('Supabase Workout Log Sync Error:', error.message);
     return data;
   } catch (e) {
+    console.error('Supabase Workout Log Sync Exception:', e);
     return null;
   }
 };
