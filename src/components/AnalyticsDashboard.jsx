@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { BarChart3, Calendar, Flame, Dumbbell, Award, Download, Upload, Trash2, Calculator, ShieldCheck, ChevronRight } from 'lucide-react';
 import { calculate1RM } from '../utils/fitnessCalculators';
+import { importWorkoutLogs } from '../utils/storage';
 
-export default function AnalyticsDashboard({ workoutLogs = [], onClearHistory }) {
+export default function AnalyticsDashboard({ workoutLogs = [], onClearHistory, onUpdateLogs, activeUserId }) {
   // 1RM calculator widget states
   const [calcWeight, setCalcWeight] = useState(80);
   const [calcReps, setCalcReps] = useState(5);
+  const [importStatus, setImportStatus] = useState(null);
 
   const estimated1RM = calculate1RM(parseFloat(calcWeight) || 0, parseInt(calcReps) || 0);
 
@@ -25,6 +27,36 @@ export default function AnalyticsDashboard({ workoutLogs = [], onClearHistory })
     downloadAnchor.remove();
   };
 
+  const handleImportJSON = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const jsonData = JSON.parse(event.target?.result);
+        const { mergedLogs, count, newCount } = importWorkoutLogs(jsonData, activeUserId);
+        if (onUpdateLogs) {
+          onUpdateLogs(mergedLogs);
+        }
+        setImportStatus({
+          type: 'success',
+          text: `นำเข้าข้อมูลเรียบร้อยแล้ว (${count} รายการ, รายการใหม่ ${newCount} รายการ) ⚡`
+        });
+        setTimeout(() => setImportStatus(null), 5000);
+      } catch (err) {
+        setImportStatus({
+          type: 'error',
+          text: err.message || 'ไม่สามารถนำเข้าข้อมูลได้ กรุณาตรวจสอบรูปแบบไฟล์ JSON'
+        });
+        setTimeout(() => setImportStatus(null), 5000);
+      } finally {
+        if (e.target) e.target.value = '';
+      }
+    };
+    reader.readAsText(file);
+  };
+
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       {/* Top Banner & Quick Stats */}
@@ -41,16 +73,47 @@ export default function AnalyticsDashboard({ workoutLogs = [], onClearHistory })
             </p>
           </div>
 
-          <div className="flex items-center space-x-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <label className="cursor-pointer px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 hover:border-emerald-500/50 text-slate-200 hover:text-white text-xs font-bold transition-all flex items-center space-x-1.5 shadow-sm">
+              <Upload className="w-4 h-4 text-emerald-400" />
+              <span>นำเข้าข้อมูล JSON</span>
+              <input
+                type="file"
+                accept=".json,application/json"
+                onChange={handleImportJSON}
+                className="hidden"
+              />
+            </label>
+
             <button
               onClick={exportDataJSON}
-              className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 text-xs font-bold transition-all flex items-center space-x-1.5"
+              className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 hover:border-cyan-500/50 text-slate-200 hover:text-white text-xs font-bold transition-all flex items-center space-x-1.5 shadow-sm"
             >
               <Download className="w-4 h-4 text-cyan-400" />
               <span>สำรองข้อมูล JSON</span>
             </button>
           </div>
         </div>
+
+        {/* Import Notification Banner */}
+        {importStatus && (
+          <div className={`mb-6 p-3.5 rounded-2xl text-xs font-bold flex items-center justify-between border transition-all ${
+            importStatus.type === 'success'
+              ? 'bg-emerald-950/50 text-emerald-300 border-emerald-500/40 shadow-lg shadow-emerald-950/30'
+              : 'bg-rose-950/50 text-rose-300 border-rose-500/40 shadow-lg shadow-rose-950/30'
+          }`}>
+            <div className="flex items-center space-x-2">
+              <span className="text-base">{importStatus.type === 'success' ? '✅' : '⚠️'}</span>
+              <span>{importStatus.text}</span>
+            </div>
+            <button
+              onClick={() => setImportStatus(null)}
+              className="text-slate-400 hover:text-white text-xs px-2 py-0.5 rounded transition-colors"
+            >
+              ✕
+            </button>
+          </div>
+        )}
 
         {/* 4 Cards Stat Summary */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

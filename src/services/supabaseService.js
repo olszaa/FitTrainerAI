@@ -384,7 +384,40 @@ export const fetchCustomExercisesFromSupabase = async (userId) => {
   }
 };
 
+export const deleteCustomPlanFromSupabase = async (planId, userId) => {
+  if (!isSupabaseConfigured() || !planId) return false;
+  const client = getSupabaseClient();
+  if (!client) return false;
+
+  try {
+    let query = client.from('custom_plans').delete().eq('id', planId);
+    if (userId) query = query.eq('user_id', userId);
+    const { error } = await query;
+    if (error) console.warn('Supabase Custom Plan Delete Error:', error.message);
+    return !error;
+  } catch (e) {
+    return false;
+  }
+};
+
+export const deleteCustomExerciseFromSupabase = async (exerciseId, userId) => {
+  if (!isSupabaseConfigured() || !exerciseId) return false;
+  const client = getSupabaseClient();
+  if (!client) return false;
+
+  try {
+    let query = client.from('custom_exercises').delete().eq('id', exerciseId);
+    if (userId) query = query.eq('user_id', userId);
+    const { error } = await query;
+    if (error) console.warn('Supabase Custom Exercise Delete Error:', error.message);
+    return !error;
+  } catch (e) {
+    return false;
+  }
+};
+
 // --- Full Sync All Local Data to Supabase Cloud ---
+
 export const syncAllLocalDataToSupabase = async (profile, logs, plans, customExercises) => {
   if (!isSupabaseConfigured() || !profile?.id) return { success: false, count: 0 };
   const userId = profile.id;

@@ -4,6 +4,8 @@ import {
   syncWorkoutLogToSupabase,
   syncCustomPlanToSupabase,
   syncCustomExerciseToSupabase,
+  deleteCustomPlanFromSupabase,
+  deleteCustomExerciseFromSupabase,
   fetchAllProfilesFromSupabase,
   fetchProfileFromSupabase,
   fetchWorkoutLogsFromSupabase,
@@ -38,147 +40,16 @@ export const markUserAsDeleted = (userId) => {
   }
 };
 
-// Sample initial mock logs
-const INITIAL_LOGS = [
-  {
-    id: 'log-1',
-    date: new Date(Date.now() - 86400000 * 2).toISOString(), // 2 days ago
-    routineName: 'Push Day - Hypertrophy (Gym)',
-    mode: 'GYM',
-    durationMinutes: 52,
-    caloriesBurned: 340,
-    totalTonnageKg: 4250,
-    exercises: [
-      {
-        exerciseId: 'bench-press',
-        exerciseName: 'Barbell Bench Press',
-        category: 'CHEST',
-        sets: [
-          { weight: 50, reps: 10, completed: true, type: 'Normal', rpe: 7 },
-          { weight: 60, reps: 8, completed: true, type: 'Normal', rpe: 8 },
-          { weight: 65, reps: 8, completed: true, type: 'Normal', rpe: 9 },
-        ]
-      },
-      {
-        exerciseId: 'dumbbell-incline-press',
-        exerciseName: 'Incline Dumbbell Press',
-        category: 'CHEST',
-        sets: [
-          { weight: 20, reps: 10, completed: true, type: 'Normal', rpe: 8 },
-          { weight: 22, reps: 8, completed: true, type: 'Normal', rpe: 9 },
-        ]
-      },
-      {
-        exerciseId: 'lateral-raise',
-        exerciseName: 'Dumbbell Lateral Raise',
-        category: 'SHOULDERS',
-        sets: [
-          { weight: 8, reps: 15, completed: true, type: 'Normal', rpe: 7 },
-          { weight: 10, reps: 12, completed: true, type: 'Normal', rpe: 9 },
-        ]
-      }
-    ]
-  },
-  {
-    id: 'log-2',
-    date: new Date(Date.now() - 86400000 * 1).toISOString(), // Yesterday
-    routineName: '7-Minute Full Body HIIT (Home)',
-    mode: 'HOME',
-    durationMinutes: 10,
-    caloriesBurned: 95,
-    totalTonnageKg: 0,
-    exercises: [
-      {
-        exerciseId: 'jumping-jacks',
-        exerciseName: 'Jumping Jacks',
-        category: 'FULLBODY',
-        sets: [{ weight: 0, reps: 30, completed: true, type: 'Normal' }]
-      },
-      {
-        exerciseId: 'push-ups',
-        exerciseName: 'Standard Push-Up',
-        category: 'CHEST',
-        sets: [{ weight: 0, reps: 20, completed: true, type: 'Normal' }]
-      },
-      {
-        exerciseId: 'plank',
-        exerciseName: 'Forearm Plank',
-        category: 'ABS',
-        sets: [{ weight: 0, reps: 60, completed: true, type: 'Normal' }]
-      }
-    ]
-  }
-];
-
-// Initialize multi-user storage and migrate any existing legacy single-user data
+// Initialize multi-user storage cleanly without mock users
 export const initializeMultiUserStorage = () => {
-  let users = null;
   try {
     const rawUsers = localStorage.getItem(STORAGE_KEY_USERS);
-    if (rawUsers) users = JSON.parse(rawUsers);
+    return rawUsers ? JSON.parse(rawUsers) : [];
   } catch (e) {
-    users = null;
+    return [];
   }
-
-  if (!users || !Array.isArray(users) || users.length === 0) {
-    // Read legacy profile or create default
-    let legacyProfile = null;
-    try {
-      const rawProf = localStorage.getItem('fittrainer_user_profile');
-      if (rawProf) legacyProfile = JSON.parse(rawProf);
-    } catch (e) {}
-
-    const primaryUser = {
-      id: DEFAULT_USER_ID,
-      name: legacyProfile?.name || 'คุณยท (Fitness Explorer)',
-      avatar: legacyProfile?.avatar || '🏋️‍♂️',
-      gender: legacyProfile?.gender || 'MALE',
-      age: Number(legacyProfile?.age) || 28,
-      weightKg: Number(legacyProfile?.weightKg) || 72,
-      targetWeightKg: Number(legacyProfile?.targetWeightKg) || 75,
-      heightCm: Number(legacyProfile?.heightCm) || 175,
-      goal: legacyProfile?.goal || 'MUSCLE_BUILDING',
-      gymLevel: legacyProfile?.gymLevel || 'INTERMEDIATE',
-      targetDaysPerWeek: Number(legacyProfile?.targetDaysPerWeek) || 4,
-      streakDays: Number(legacyProfile?.streakDays) || 4,
-      createdAt: new Date().toISOString(),
-      weightHistory: legacyProfile?.weightHistory || [
-        { date: new Date(Date.now() - 86400000 * 14).toISOString().slice(0, 10), weightKg: 73.2 },
-        { date: new Date(Date.now() - 86400000 * 7).toISOString().slice(0, 10), weightKg: 72.6 },
-        { date: new Date().toISOString().slice(0, 10), weightKg: 72.0 },
-      ]
-    };
-
-    users = [primaryUser];
-    localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(users));
-    localStorage.setItem(STORAGE_KEY_ACTIVE_USER, DEFAULT_USER_ID);
-
-    // Save scoped profile for user-1
-    localStorage.setItem(`fittrainer_user_profile_${DEFAULT_USER_ID}`, JSON.stringify(primaryUser));
-
-    // Migrate legacy logs
-    const legacyLogs = localStorage.getItem('fittrainer_workout_logs');
-    if (legacyLogs) {
-      localStorage.setItem(`fittrainer_workout_logs_${DEFAULT_USER_ID}`, legacyLogs);
-    } else {
-      localStorage.setItem(`fittrainer_workout_logs_${DEFAULT_USER_ID}`, JSON.stringify(INITIAL_LOGS));
-    }
-
-    // Migrate legacy custom plans
-    const legacyPlans = localStorage.getItem('fittrainer_custom_plans');
-    if (legacyPlans) {
-      localStorage.setItem(`fittrainer_custom_plans_${DEFAULT_USER_ID}`, legacyPlans);
-    }
-
-    // Migrate legacy chat
-    const legacyChat = localStorage.getItem('fittrainer_ai_chat_history');
-    if (legacyChat) {
-      localStorage.setItem(`fittrainer_ai_chat_${DEFAULT_USER_ID}`, legacyChat);
-    }
-  }
-
-  return users;
 };
+
 
 // --- Multi-User Management APIs ---
 
@@ -307,17 +178,17 @@ export const syncUserDataFromCloudToLocal = async (userId) => {
       }
       localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(users));
     }
-    if (Array.isArray(logs) && logs.length > 0) {
+    if (Array.isArray(logs)) {
       localStorage.setItem(`fittrainer_workout_logs_${userId}`, JSON.stringify(logs));
     }
-    if (Array.isArray(plans) && plans.length > 0) {
+    if (Array.isArray(plans)) {
       localStorage.setItem(`fittrainer_custom_plans_${userId}`, JSON.stringify(plans));
     }
-    if (Array.isArray(customExs) && customExs.length > 0) {
+    if (Array.isArray(customExs)) {
       localStorage.setItem(`fittrainer_custom_exercises_${userId}`, JSON.stringify(customExs));
     }
 
-    return { profile, logs, plans, customExs };
+    return { profile, logs: logs || [], plans: plans || [], customExs: customExs || [] };
   } catch (e) {
     console.warn('syncUserDataFromCloudToLocal error:', e);
     return null;
@@ -333,30 +204,7 @@ export const deleteUser = async (userId) => {
   const users = getUsersList();
   const updatedUsers = users.filter((u) => u.id !== userId);
 
-  // If no users left locally, create a default clean user
-  let finalUsers = updatedUsers;
-  if (finalUsers.length === 0) {
-    const defaultUser = {
-      id: 'user-' + Date.now(),
-      name: 'คุณยท (Fitness Explorer)',
-      avatar: '🏋️‍♂️',
-      gender: 'MALE',
-      age: 28,
-      weightKg: 72,
-      targetWeightKg: 75,
-      heightCm: 175,
-      goal: 'MUSCLE_BUILDING',
-      gymLevel: 'INTERMEDIATE',
-      targetDaysPerWeek: 4,
-      streakDays: 1,
-      createdAt: new Date().toISOString(),
-      weightHistory: [{ date: new Date().toISOString().slice(0, 10), weightKg: 72 }]
-    };
-    finalUsers = [defaultUser];
-    localStorage.setItem(`fittrainer_user_profile_${defaultUser.id}`, JSON.stringify(defaultUser));
-  }
-
-  localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(finalUsers));
+  localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(updatedUsers));
 
   // Clean up scoped local data
   localStorage.removeItem(`fittrainer_user_profile_${userId}`);
@@ -372,29 +220,27 @@ export const deleteUser = async (userId) => {
     console.warn('Supabase cloud user delete warning:', err);
   }
 
-  // If deleted user was active, switch to first available user
+  // If deleted user was active, switch to first available user or null
   let activeId = getActiveUserId();
-  if (activeId === userId || !finalUsers.some((u) => u.id === activeId)) {
-    activeId = finalUsers[0].id;
-    setActiveUserId(activeId);
+  if (activeId === userId || !updatedUsers.some((u) => u.id === activeId)) {
+    activeId = updatedUsers.length > 0 ? updatedUsers[0].id : null;
+    if (activeId) {
+      setActiveUserId(activeId);
+    } else {
+      localStorage.removeItem(STORAGE_KEY_ACTIVE_USER);
+    }
   }
 
-  return { activeId, updatedUsers: finalUsers };
+  return { activeId, updatedUsers };
 };
 
 // --- Scoped Data APIs (Accepting optional userId) ---
 
 export const getWorkoutLogs = (userId = getActiveUserId()) => {
+  if (!userId) return [];
   const key = `fittrainer_workout_logs_${userId}`;
   const data = localStorage.getItem(key);
-  if (!data) {
-    // If it's default user, return initial sample logs
-    if (userId === DEFAULT_USER_ID) {
-      localStorage.setItem(key, JSON.stringify(INITIAL_LOGS));
-      return INITIAL_LOGS;
-    }
-    return [];
-  }
+  if (!data) return [];
   try {
     return JSON.parse(data);
   } catch (e) {
@@ -409,6 +255,66 @@ export const saveWorkoutLog = (newLog, userId = getActiveUserId()) => {
   localStorage.setItem(key, JSON.stringify(updatedLogs));
   syncWorkoutLogToSupabase(newLog, userId);
   return updatedLogs;
+};
+
+export const importWorkoutLogs = (jsonData, userId = getActiveUserId()) => {
+  let logsToImport = [];
+
+  if (Array.isArray(jsonData)) {
+    logsToImport = jsonData;
+  } else if (jsonData && typeof jsonData === 'object') {
+    if (Array.isArray(jsonData.workoutLogs)) {
+      logsToImport = jsonData.workoutLogs;
+    } else if (Array.isArray(jsonData.logs)) {
+      logsToImport = jsonData.logs;
+    }
+  }
+
+  if (!logsToImport || logsToImport.length === 0) {
+    throw new Error('ไม่พบข้อมูลประวัติการออกกำลังกายในไฟล์ JSON นี้');
+  }
+
+  const existingLogs = getWorkoutLogs(userId);
+  const existingMap = new Map();
+
+  existingLogs.forEach((l) => {
+    if (l && l.id) existingMap.set(l.id, l);
+  });
+
+  let newCount = 0;
+  logsToImport.forEach((log) => {
+    if (!log) return;
+    const logId = log.id || `log-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
+    const formattedLog = {
+      ...log,
+      id: logId,
+      date: log.date || new Date().toISOString(),
+      routineName: log.routineName || log.name || 'Workout Session',
+      mode: log.mode || 'GYM',
+      durationMinutes: Number(log.durationMinutes) || 0,
+      caloriesBurned: Number(log.caloriesBurned) || 0,
+      totalTonnageKg: Number(log.totalTonnageKg) || 0,
+      exercises: Array.isArray(log.exercises) ? log.exercises : []
+    };
+
+    if (!existingMap.has(logId)) {
+      newCount++;
+    }
+    existingMap.set(logId, formattedLog);
+
+    // Sync to Supabase Cloud
+    syncWorkoutLogToSupabase(formattedLog, userId);
+  });
+
+  // Sort by date descending
+  const mergedLogs = Array.from(existingMap.values()).sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
+
+  const key = `fittrainer_workout_logs_${userId}`;
+  localStorage.setItem(key, JSON.stringify(mergedLogs));
+
+  return { mergedLogs, count: logsToImport.length, newCount };
 };
 
 export const getCustomPlans = (userId = getActiveUserId()) => {
@@ -443,6 +349,7 @@ export const deleteCustomPlan = (planId, userId = getActiveUserId()) => {
   const plans = getCustomPlans(userId);
   const updated = plans.filter((p) => p.id !== planId);
   localStorage.setItem(key, JSON.stringify(updated));
+  deleteCustomPlanFromSupabase(planId, userId);
   return updated;
 };
 
@@ -549,6 +456,7 @@ export const deleteCustomExercise = (exerciseId, userId = getActiveUserId()) => 
   const customExercises = getCustomExercises(userId);
   const updated = customExercises.filter((ex) => ex.id !== exerciseId);
   localStorage.setItem(key, JSON.stringify(updated));
+  deleteCustomExerciseFromSupabase(exerciseId, userId);
   return updated;
 };
 

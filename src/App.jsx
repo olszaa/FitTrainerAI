@@ -49,30 +49,33 @@ export default function App() {
   const [userProfile, setUserProfile] = useState(() => getUserProfile(activeUserId));
   const [workoutLogs, setWorkoutLogs] = useState(() => getWorkoutLogs(activeUserId));
 
-  // Sync cloud profiles on app mount so all registered accounts are available across devices
+  // Fetch cloud profiles on app mount so all registered accounts are available across devices
   useEffect(() => {
     const fetchCloudProfiles = async () => {
-      // Auto-push any local profiles to Supabase Cloud
-      const localUsers = getUsersList();
-      localUsers.forEach((u) => {
-        const prof = getUserProfile(u.id);
-        if (prof) syncProfileToSupabase(prof);
-      });
-
-      const mergedUsers = await syncCloudProfilesToLocal();
-      if (mergedUsers) {
-        setUsersList(mergedUsers);
+      const cloudUsers = await syncCloudProfilesToLocal();
+      if (cloudUsers) {
+        setUsersList(cloudUsers);
       }
     };
     fetchCloudProfiles();
   }, []);
 
-  // Sync user profile & logs from cloud whenever active user is loaded
+  // Fetch active user profile & logs from Supabase Cloud whenever active user is loaded
   useEffect(() => {
     if (isAuthenticated && activeUserId) {
-      syncUserDataFromCloudToLocal(activeUserId).then(() => {
-        setUserProfile(getUserProfile(activeUserId));
-        setWorkoutLogs(getWorkoutLogs(activeUserId));
+      syncUserDataFromCloudToLocal(activeUserId).then((res) => {
+        if (res && res.profile) {
+          setUserProfile(res.profile);
+          setWorkoutLogs(res.logs || []);
+        } else if (!res || !res.profile) {
+          const allProfiles = getUsersList();
+          if (allProfiles.length > 0 && allProfiles.some((u) => u.id === activeUserId)) {
+            setUserProfile(getUserProfile(activeUserId));
+            setWorkoutLogs(getWorkoutLogs(activeUserId));
+          } else {
+            handleLogout();
+          }
+        }
       });
     }
   }, [activeUserId, isAuthenticated]);
@@ -96,20 +99,23 @@ export default function App() {
   const doSwitchUser = async (newUserId) => {
     setActiveUserId(newUserId);
     setActiveUserIdState(newUserId);
-    setUserProfile(getUserProfile(newUserId));
-    setWorkoutLogs(getWorkoutLogs(newUserId));
     setActiveWorkout(null);
     setActiveTab('body');
 
-    await syncUserDataFromCloudToLocal(newUserId);
-    setUserProfile(getUserProfile(newUserId));
-    setWorkoutLogs(getWorkoutLogs(newUserId));
+    const res = await syncUserDataFromCloudToLocal(newUserId);
+    if (res && res.profile) {
+      setUserProfile(res.profile);
+      setWorkoutLogs(res.logs || []);
+    } else {
+      setUserProfile(getUserProfile(newUserId));
+      setWorkoutLogs(getWorkoutLogs(newUserId));
+    }
   };
 
   const handleLoginSuccess = async (userId) => {
     setAuthSession(userId);
-    await doSwitchUser(userId);
     setIsAuthenticated(true);
+    await doSwitchUser(userId);
     setActiveTab('body');
   };
 
@@ -261,6 +267,8 @@ export default function App() {
           <AnalyticsDashboard
             key={`analytics-${activeUserId}`}
             workoutLogs={workoutLogs}
+            onUpdateLogs={setWorkoutLogs}
+            activeUserId={activeUserId}
           />
         )}
       </main>
