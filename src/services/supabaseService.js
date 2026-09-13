@@ -131,9 +131,8 @@ export const fetchProfileFromSupabase = async (userId) => {
   if (!client) return null;
 
   try {
-    const { data, error } = await client.from('profiles').select('*').eq('id', userId).single();
-    if (error) return null;
-    if (!data) return null;
+    const { data, error } = await client.from('profiles').select('*').eq('id', userId).maybeSingle();
+    if (error || !data) return null;
 
     return {
       id: data.id,
