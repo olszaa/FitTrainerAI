@@ -85,7 +85,7 @@ const RAW_EXERCISE_DATABASE = [
     tips: 'รักษาองศาข้อศอกให้คงที่ตลอดการเคลื่อนไหว อย่าเปลี่ยนท่าเป็นท่าดัน',
     icon: '🦋',
     prompt3D: {
-      imagePrompt: 'Full-body top-down three-quarter angle, a 3D faceless matte-grey mannequin on a flat workout bench opening both arms wide with slight elbow bend, holding dumbbells in a fly motion. The chest pectorals are under deep stretch, glowing intensely in radiant neon red and orange. Pitch-black background, sharp anatomical details, 2k resolution, aspect ratio 9:16.',
+      imagePrompt: 'Isometric 45-degree front-three-quarter low-angle perspective, a 3D faceless matte-grey anatomical mannequin wearing plain black compression shorts, lying flat on a 0-degree horizontal flat bench opening arms wide with a slight elbow bend holding dumbbells in a fly motion. The pectoral muscles in deep stretch glow intensely in vivid neon red with electric cyan fiber lines. Solid dark charcoal-black floor and pure black background, studio rim lighting, Unreal Engine 5 render, clean anatomy, 2k resolution --ar 1:1',
       videoPrompt: 'Vertical 9:16 video, 3D mannequin dumbbell chest fly with radiant neon red and orange pectoral stretch glow, dark background.'
     }
   },
@@ -153,7 +153,7 @@ const RAW_EXERCISE_DATABASE = [
     tips: 'ไม่ควรปรับเบาะชันเกิน 45 องศา เพื่อไม่ให้น้ำหนักตกไปที่หัวไหล่หน้ามากเกินไป',
     icon: '🏋️‍♂️',
     prompt3D: {
-      imagePrompt: 'Full-body shot, a 3D faceless matte-grey mannequin wearing black athletic shorts on a 45-degree incline bench, pressing a barbell upward. Accurate medical anatomy render where ONLY the clavicular head (upper chest muscles directly below the collarbone) glows intensely in vivid neon red and cyan, clearly separated from the mid-chest. Solid pitch-black background, high-contrast rim lighting, 2k resolution, aspect ratio 9:16.',
+      imagePrompt: 'Isometric 45-degree front-three-quarter low-angle perspective, a 3D faceless matte-grey anatomical mannequin wearing plain black compression shorts, seated back against a steep 45-to-60-degree high-incline utility bench pressing a knurled barbell upward directly above the upper chest. The clavicular upper pectoral muscles and anterior deltoids glow intensely in vivid neon red with electric cyan fiber lines. Solid dark charcoal-black floor and pure black background, studio rim lighting, Unreal Engine 5 render, clean anatomy, 2k resolution --ar 1:1',
       videoPrompt: 'Vertical video, 3D mannequin incline bench pressing barbell with upper chest glowing red and blue, 4k 60fps.'
     }
   },
@@ -175,7 +175,7 @@ const RAW_EXERCISE_DATABASE = [
     tips: 'รักษาตำแหน่งข้อศอกให้ทำมุม 45 องศากับลำตัว ไม่กางข้อศอกออกมากเกินไป',
     icon: '🏋️‍♂️',
     prompt3D: {
-      imagePrompt: 'Full-body front three-quarter view, a 3D faceless matte-grey mannequin on a 30-to-45-degree incline bench pushing two dumbbells toward the ceiling. The upper chest (clavicular pectoralis) glows with a bright red-orange holographic energy effect, contracting at the top. Pitch-black dark mode background, studio lighting, 2k resolution, aspect ratio 9:16.',
+      imagePrompt: 'Isometric 45-degree front-three-quarter low-angle perspective, a 3D faceless matte-grey anatomical mannequin wearing plain black compression shorts, seated back on a steep 45-to-60-degree high-incline utility bench pressing two heavy dumbbells upward. The upper clavicular pectoral muscles and anterior deltoids glow intensely in vivid neon red with electric cyan fiber lines radiating outward. Solid dark charcoal-black floor and pure black background, studio rim lighting, Unreal Engine 5 render, clean anatomy, 2k resolution --ar 1:1',
       videoPrompt: 'Vertical video, 3D mannequin incline dumbbell press with upper chest glowing red-orange holographic energy, 4k.'
     }
   },
@@ -333,7 +333,7 @@ const RAW_EXERCISE_DATABASE = [
     tips: 'หย่อนดัมเบลลงให้ยืดโครงซี่โครงและอกเต็มที่ ช่วยเปิดขยายทรวงอกให้กว้างขึ้น',
     icon: '🎈',
     prompt3D: {
-      imagePrompt: 'Full-body side profile, a 3D faceless matte-grey mannequin lying perpendicular across a flat bench, holding a single dumbbell overhead in a deep stretch behind the head. Entire chest cage, upper pectorals, and serratus anterior glow in vibrant red and neon yellow to visualize ribcage expansion and muscle stretch. Pitch-black dark background, 2k resolution, aspect ratio 9:16.',
+      imagePrompt: 'Isometric 45-degree front-three-quarter low-angle perspective, a 3D faceless matte-grey anatomical mannequin wearing plain black compression shorts, lying perpendicular across a 0-degree flat utility bench with hips dropped, reaching a heavy dumbbell backwards overhead in a full arc. The serratus anterior, rib cage intercostals, and lats glow intensely in vivid neon red with electric cyan fiber lines. Solid dark charcoal-black floor and pure black background, studio rim lighting, Unreal Engine 5 render, clean anatomy, 2k resolution --ar 1:1',
       videoPrompt: 'Vertical video, dumbbell pullover with chest cage and serratus glowing in vibrant red and neon yellow, dark background.'
     }
   },
@@ -355,7 +355,7 @@ const RAW_EXERCISE_DATABASE = [
     tips: 'ล็อกข้อศอกให้อยู่นิ่ง ให้เคลื่อนไหวเฉพาะข้อต่อข้อศอกเท่านั้นเพื่อโฟกัสหลังแขนเต็มที่',
     icon: '💪',
     prompt3D: {
-      imagePrompt: 'Full-body shot from the side, a 3D faceless grey anatomical mannequin standing upright at a cable machine pushing a straight bar downward. Triceps muscle group lights up with a glowing neon blue and red overlay. Solid dark black background, clean anatomical CGI visualization, 2k resolution, aspect ratio 9:16.',
+      imagePrompt: 'Isometric 45-degree front-three-quarter low-angle perspective, a 3D faceless matte-grey anatomical mannequin wearing plain black compression shorts, standing upright gripping a cable straight bar with elbows pinned at sides pushing downward. The lateral and long heads of the triceps muscles glow intensely in vivid neon red with electric cyan fiber lines. Solid dark charcoal-black floor and pure black background, studio rim lighting, Unreal Engine 5 render, clean anatomy, 2k resolution --ar 1:1',
       videoPrompt: 'Vertical video of 3D mannequin performing cable triceps pushdown with electric glowing red and blue triceps, 4k.'
     }
   },
@@ -377,8 +377,30 @@ const RAW_EXERCISE_DATABASE = [
     tips: 'เกร็งหน้าท้องและพยายามหนีบข้อศอกไม่ให้กางออกด้านข้างมากเกินไป',
     icon: '💪',
     prompt3D: {
-      imagePrompt: 'Full-body shot, a 3D faceless grey mannequin seated on a flat bench holding a dumbbell overhead with both hands, elbows bent backward. Triceps muscles glowing in vivid red highlight. Dark void background, cinematic lighting, 2k resolution, aspect ratio 9:16.',
+      imagePrompt: 'Isometric 45-degree front-three-quarter low-angle perspective, a 3D faceless matte-grey anatomical mannequin wearing plain black compression shorts, seated upright on a near-vertical 75-to-85-degree high-back utility bench holding a dumbbell overhead behind the neck and extending forearms upward. The long head of the triceps glows intensely in vivid neon red with electric cyan fiber lines. Solid dark charcoal-black floor and pure black background, studio rim lighting, Unreal Engine 5 render, clean anatomy, 2k resolution --ar 1:1',
       videoPrompt: 'Vertical 3D video, mannequin performing seated overhead dumbbell triceps extension with glowing red triceps long head, 4k.'
+    }
+  },
+  {
+    id: 'db-skull-crusher',
+    name: 'Dumbbell Skull Crusher (Lying Triceps Extension)',
+    nameTh: 'นอนราบบนม้านั่งดันดัมเบลฝึกหลังแขน (DB Skull Crusher)',
+    category: 'TRICEPS',
+    muscle: 'Triceps Brachii (All 3 Heads)',
+    secondaryMuscles: ['Forearms'],
+    equipment: 'DUMBBELL',
+    isGym: true,
+    isHome: true,
+    instructions: [
+      'นอนราบบนม้านั่ง ถือดัมเบลสองข้างชูแขนขึ้นตั้งฉากกับลำตัวเหนือหน้าอก',
+      'งอเฉพาะข้อศอก ค่อยๆ หย่อนดัมเบลลงข้างขมับหรือเหนือศีรษะอย่างควบคุมจนหลังแขนตึง',
+      'ออกแรงเหยียดแขนดันดัมเบลกลับขึ้นสู่จุดเริ่มต้นโดยล็อกข้อศอกให้อยู่กับที่'
+    ],
+    tips: 'รักษาต้นแขนให้อยู่นิ่งตรง ไม่กางข้อศอกออกด้านข้าง เพื่อให้แรงตกที่หลังแขนเต็มๆ',
+    icon: '💪',
+    prompt3D: {
+      imagePrompt: 'Isometric 45-degree front-three-quarter low-angle perspective, a 3D faceless matte-grey anatomical mannequin wearing plain black compression shorts, lying on a 0-degree flat horizontal bench extending two dumbbells from behind the temples vertically upwards. Horseshoe triceps glowing intensely in vivid neon red with electric cyan fiber lines. Solid pitch-black background, Unreal Engine 5 render, clean anatomy, 2k resolution --ar 1:1',
+      videoPrompt: 'Vertical 3D video, mannequin performing dumbbell skull crushers with glowing neon red triceps, 4k.'
     }
   },
 
@@ -683,19 +705,21 @@ export const EXERCISE_IMAGE_MAP = {
   'db-chest-fly': '/exercises/db_chest_fly.jpg',
   'standing-cable-chest-fly': '/exercises/standing_cable_chest_fly.jpg',
   'kettlebell-floor-press': '/exercises/db_bench_press.jpg',
-  'incline-barbell-press': '/exercises/incline_press.jpg',
+  'incline-barbell-press': '/exercises/incline_barbell_press.jpg',
   'incline-db-bench-press': '/exercises/incline_db_bench_press.jpg',
+  'dumbbell-incline-press': '/exercises/incline_db_bench_press.jpg',
   'incline-db-fly': '/exercises/incline_db_fly.jpg',
   'low-to-high-cable-fly': '/exercises/low_to_high_cable_fly.jpg',
   'high-to-low-cable-fly': '/exercises/high_to_low_cable_fly.jpg',
   'decline-db-press': '/exercises/db_bench_press.jpg',
   'incline-push-up': '/exercises/plank.jpg',
   'hex-press': '/exercises/db_bench_press.jpg',
-  'db-pullover': '/exercises/overhead_db_extension.jpg',
+  'db-pullover': '/exercises/db_pullover.jpg',
 
   // Triceps
   'tricep-pushdown': '/exercises/tricep_pushdown.jpg',
   'overhead-db-extension': '/exercises/overhead_db_extension.jpg',
+  'db-skull-crusher': '/exercises/db_skull_crusher.jpg',
 
   // Pull Group
   'lat-pulldown': '/exercises/lat_pulldown.jpg',
