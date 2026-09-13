@@ -1369,6 +1369,9 @@ export default function GymLogger({
                       </div>
 
                       <div className="min-w-0">
+                        <h4 className="font-extrabold text-white text-sm sm:text-base leading-tight truncate mb-1">
+                          {ex.name}
+                        </h4>
                         <div className="flex items-center space-x-2 mb-1">
                           <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
                             ท่าที่ {exIdx + 1}
@@ -1377,10 +1380,9 @@ export default function GymLogger({
                             {ex.equipment}
                           </span>
                         </div>
-                        <h4 className="font-extrabold text-white text-sm sm:text-base leading-tight truncate">
-                          {ex.name}
-                        </h4>
-                        <p className="text-xs text-slate-400 mt-0.5 truncate">{ex.englishName}</p>
+                        {ex.englishName && ex.englishName !== ex.name && (
+                          <p className="text-xs text-slate-400 truncate">{ex.englishName}</p>
+                        )}
                         {ex.muscle && (
                           <p className="text-[11px] text-cyan-400/90 font-medium mt-0.5 truncate">
                             🎯 โฟกัส: {ex.muscle}
@@ -2027,6 +2029,16 @@ export default function GymLogger({
             )}
           </div>
 
+          {/* Exercise Title at the VERY TOP */}
+          <div className="text-center my-2">
+            <h3 className="text-xl sm:text-2xl font-black text-white text-center mb-1">
+              {isCurrentCardio ? currentEx.name : (playerPhase === 'WORK' ? currentEx.name : (nextEx ? nextEx.name : currentEx.name))}
+            </h3>
+            {currentEx?.englishName && currentEx.englishName !== currentEx.name && (
+              <p className="text-xs text-slate-400 font-medium">{currentEx.englishName}</p>
+            )}
+          </div>
+
           {/* Big 3D Mannequin Visual Box */}
           <div className="flex flex-col items-center justify-center my-2">
             <div className={`relative w-48 h-48 sm:w-56 sm:h-56 rounded-3xl overflow-hidden border-2 shadow-2xl mb-4 bg-slate-950 ${
@@ -2087,11 +2099,6 @@ export default function GymLogger({
                 </div>
               )}
             </div>
-
-            {/* Exercise Title */}
-            <h3 className="text-xl sm:text-2xl font-black text-white text-center mb-1">
-              {isCurrentCardio ? currentEx.name : (playerPhase === 'WORK' ? currentEx.name : (nextEx ? nextEx.name : currentEx.name))}
-            </h3>
 
             {/* Target Set Info / Interval Info */}
             {isCurrentCardio ? (

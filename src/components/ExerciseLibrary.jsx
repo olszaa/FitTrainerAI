@@ -332,6 +332,40 @@ export default function ExerciseLibrary() {
               onClick={() => handleOpenExercise(ex)}
               className="glass-panel border-slate-800 hover:border-cyan-500/50 rounded-3xl overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1.5 group flex flex-col justify-between shadow-xl relative"
             >
+              {/* Card Header: Exercise Name at the VERY TOP */}
+              <div className="p-4 pb-3 bg-gradient-to-b from-[#161a26] to-[#10131b] border-b border-slate-800/80">
+                <div className="flex items-start justify-between gap-2 mb-1">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-extrabold text-white text-base group-hover:text-cyan-300 transition-colors line-clamp-1">
+                      {ex.nameTh || ex.name}
+                    </h3>
+                    <p className="text-xs text-slate-400 font-medium line-clamp-1 mt-0.5">
+                      {ex.name}
+                    </p>
+                  </div>
+                  {ex.isCustom ? (
+                    <span className="shrink-0 text-[10px] font-black px-2.5 py-1 rounded-full bg-amber-400/90 text-slate-950 shadow-md flex items-center space-x-1">
+                      <Sparkles className="w-3 h-3 fill-slate-950" />
+                      <span>สร้างเอง</span>
+                    </span>
+                  ) : (
+                    <span className={`shrink-0 text-[10px] font-extrabold px-2.5 py-1 rounded-full border shadow-md ${theme.badge}`}>
+                      {ex.category}
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between text-[11px] text-slate-300 pt-1">
+                  <div className="flex items-center space-x-1.5 truncate">
+                    <span className={`w-2 h-2 rounded-full ${theme.dot} animate-pulse`} />
+                    <span className="truncate">{ex.muscle}</span>
+                  </div>
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-black/50 text-slate-300 border border-slate-700/60 shrink-0">
+                    {EQUIPMENT_TYPES[ex.equipment] || ex.equipment}
+                  </span>
+                </div>
+              </div>
+
               {/* Card Poster / Image */}
               <div className="relative aspect-[4/5] w-full overflow-hidden bg-black flex items-center justify-center">
                 {imgSrc ? (
@@ -367,28 +401,6 @@ export default function ExerciseLibrary() {
                   )}
                 </div>
 
-                {/* Top Badges & Custom Tag */}
-                <div className="absolute top-3 left-3 right-3 flex items-center justify-between z-10">
-                  <div className="flex items-center space-x-1.5">
-                    {ex.isCustom ? (
-                      <span className="text-[10px] font-black px-2.5 py-1 rounded-full bg-amber-400/90 text-slate-950 shadow-md backdrop-blur-md flex items-center space-x-1">
-                        <Sparkles className="w-3 h-3 fill-slate-950" />
-                        <span>ท่าสร้างเอง</span>
-                      </span>
-                    ) : (
-                      <span className={`text-[10px] font-extrabold px-2.5 py-1 rounded-full border backdrop-blur-md shadow-md ${theme.badge}`}>
-                        {ex.category}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="flex items-center space-x-1.5">
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-black/60 text-slate-200 border border-slate-700/80 backdrop-blur-md">
-                      {EQUIPMENT_TYPES[ex.equipment] || ex.equipment}
-                    </span>
-                  </div>
-                </div>
-
                 {/* Quick Action buttons for custom exercises */}
                 {ex.isCustom && (
                   <div className="absolute bottom-3 right-3 flex items-center space-x-1.5 z-20">
@@ -413,36 +425,22 @@ export default function ExerciseLibrary() {
                 )}
               </div>
 
-              {/* Card Body */}
-              <div className="p-5 flex-1 flex flex-col justify-between">
-                <div>
-                  <h3 className="font-extrabold text-white text-base group-hover:text-cyan-300 transition-colors mb-1 line-clamp-1">
-                    {ex.nameTh || ex.name}
-                  </h3>
-                  <p className="text-xs text-slate-400 mb-2.5 line-clamp-1">{ex.name}</p>
-
-                  <div className="flex items-center space-x-2 text-[11px] font-semibold text-slate-300">
-                    <span className={`w-2 h-2 rounded-full ${theme.dot} animate-pulse`} />
-                    <span className="truncate">{ex.muscle}</span>
-                  </div>
-                </div>
-
-                <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-cyan-400 font-bold group-hover:translate-x-1 transition-transform">
-                  <span className="flex items-center space-x-1.5">
-                    {hasVideo ? (
-                      <>
-                        <Play className="w-3.5 h-3.5 fill-cyan-400" />
-                        <span>กดดูวิดีโอ + คำแนะนำ</span>
-                      </>
-                    ) : (
-                      <>
-                        <ImageIcon className="w-3.5 h-3.5 text-cyan-400" />
-                        <span>กดดูรายละเอียด + วิธีฝึก</span>
-                      </>
-                    )}
-                  </span>
-                  <ChevronRight className="w-4 h-4" />
-                </div>
+              {/* Card Footer Bar */}
+              <div className="p-3.5 bg-[#0e1118] border-t border-slate-800/80 flex items-center justify-between text-xs text-cyan-400 font-bold group-hover:text-cyan-300 transition-colors">
+                <span className="flex items-center space-x-1.5">
+                  {hasVideo ? (
+                    <>
+                      <Play className="w-3.5 h-3.5 fill-cyan-400" />
+                      <span>กดดูวิดีโอ 3D + วิธีฝึก</span>
+                    </>
+                  ) : (
+                    <>
+                      <ImageIcon className="w-3.5 h-3.5 text-cyan-400" />
+                      <span>กดดูวิธีฝึก & Anatomy</span>
+                    </>
+                  )}
+                </span>
+                <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </div>
             </div>
           );
@@ -718,6 +716,35 @@ export default function ExerciseLibrary() {
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-5 bg-slate-950/90 backdrop-blur-md animate-fade-in">
             <div className="w-full max-w-2xl max-h-[94vh] sm:max-h-[92vh] overflow-y-auto bg-[#131722] border border-slate-800 rounded-2xl sm:rounded-3xl shadow-2xl flex flex-col">
+              {/* Modal Top Header (Exercise Name at the VERY TOP) */}
+              <div className="p-4 sm:p-5 border-b border-slate-800 bg-[#131722]/95 sticky top-0 z-30 flex items-center justify-between gap-3 backdrop-blur-md">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-xl sm:text-2xl shrink-0">{selectedExercise.icon || '🏋️‍♂️'}</span>
+                    <h3 className="text-base sm:text-lg md:text-xl font-black text-white truncate">
+                      {selectedExercise.nameTh || selectedExercise.name}
+                    </h3>
+                  </div>
+                  {selectedExercise.name && selectedExercise.name !== selectedExercise.nameTh && (
+                    <p className="text-xs text-slate-400 truncate mt-0.5 ml-8 sm:ml-9 font-medium">
+                      {selectedExercise.name}
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex items-center space-x-2 shrink-0">
+                  <span className={`text-xs font-bold px-3 py-1 rounded-full border shadow-sm ${theme.badge}`}>
+                    {EQUIPMENT_TYPES[selectedExercise.equipment] || selectedExercise.equipment}
+                  </span>
+                  <button
+                    onClick={() => setSelectedExercise(null)}
+                    className="p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 transition-colors"
+                    title="ปิด"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
               
               {/* Media Display Screen */}
               <div className="relative w-full h-[380px] sm:h-[520px] md:h-[560px] bg-slate-950 overflow-hidden flex items-center justify-center select-none">
@@ -904,17 +931,6 @@ export default function ExerciseLibrary() {
 
               {/* Modal Body: Instructions & Guidance */}
               <div className="p-6 space-y-5">
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <h3 className="text-xl font-black text-white">
-                      {selectedExercise.nameTh || selectedExercise.name}
-                    </h3>
-                    <span className={`text-xs font-bold px-3 py-1 rounded-full border ${theme.badge}`}>
-                      {EQUIPMENT_TYPES[selectedExercise.equipment] || selectedExercise.equipment}
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-400">{selectedExercise.name}</p>
-                </div>
 
                 {/* Target Muscle Focus Box */}
                 <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 flex items-center justify-between">

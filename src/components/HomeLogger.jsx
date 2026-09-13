@@ -289,8 +289,18 @@ export default function HomeLogger({ onFinishSession, templateToOpen = null, onC
           </span>
         </div>
 
-        {/* Big 3D Mannequin Visual & Exercise Title */}
-        <div className="flex flex-col items-center justify-center my-4">
+        {/* Exercise Title at the VERY TOP */}
+        <div className="text-center my-3">
+          <h3 className="text-xl sm:text-2xl font-black text-white text-center mb-1">
+            {currentEx.name}
+          </h3>
+          {currentEx?.englishName && currentEx.englishName !== currentEx.name && (
+            <p className="text-xs text-slate-400 font-medium">{currentEx.englishName}</p>
+          )}
+        </div>
+
+        {/* Big 3D Mannequin Visual & Countdown */}
+        <div className="flex flex-col items-center justify-center my-2">
           <div className="relative w-48 h-48 sm:w-56 sm:h-56 rounded-3xl overflow-hidden border-2 border-lime-400/40 shadow-2xl mb-4 bg-slate-950">
             <img
               src={`/exercises/${currentEx.exerciseId?.replace(/-/g, '_')}.jpg`}
@@ -315,8 +325,6 @@ export default function HomeLogger({ onFinishSession, templateToOpen = null, onC
               </div>
             )}
           </div>
-
-          <h3 className="text-xl sm:text-2xl font-black text-white text-center mb-1">{currentEx.name}</h3>
 
           {/* Big Countdown Timer */}
           <div className="text-5xl sm:text-6xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-100 to-lime-400 my-2">
