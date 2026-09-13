@@ -17,79 +17,124 @@ import {
 
 export { syncProfileToSupabase, searchProfileFromSupabase };
 
-const STORAGE_KEY_USERS = 'fittrainer_users_list';
-const STORAGE_KEY_ACTIVE_USER = 'fittrainer_active_user_id';
-const STORAGE_KEY_DELETED_USERS = 'fittrainer_deleted_user_ids';
-const DEFAULT_USER_ID = 'user-1';
+// --- Pure Cloud Architecture & In-Memory Session Cache ---
+// All primary data lives 100% in Supabase Cloud.
+// LocalStorage is strictly reserved for the ephemeral session token: 'fittrainer_auth_session'.
+// All legacy/mock localStorage tables are purged to eliminate ghost data.
 
-export const getDeletedUserIds = () => {
+const STORAGE_KEY_AUTH_SESSION = 'fittrainer_auth_session';
+
+// In-memory runtime store for zero-latency component rendering during session
+const _runtimeMemory = {
+  users: [],
+  profiles: {},
+  workoutLogs: {},
+  customPlans: {},
+  customExercises: {},
+  aiChat: {}
+};
+
+/**
+ * Purges all obsolete local storage keys from previous local-database implementations.
+ * Preserves ONLY 'fittrainer_auth_session'.
+ */
+export const purgeLegacyLocalStorage = () => {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY_DELETED_USERS);
-    return raw ? JSON.parse(raw) : [];
+    const keysToRemove = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (!key) continue;
+      if (key === STORAGE_KEY_AUTH_SESSION) continue;
+
+      if (
+        key.startsWith('fittrainer_workout_logs_') ||
+        key.startsWith('fittrainer_custom_plans_') ||
+        key.startsWith('fittrainer_custom_exercises_') ||
+        key.startsWith('fittrainer_ai_chat_') ||
+        key.startsWith('fittrainer_user_profile_') ||
+        key.startsWith('fittrainer_')
+      ) {
+        keysToRemove.push(key);
+      }
+    }
+    keysToRemove.forEach((k) => localStorage.removeItem(k));
   } catch (e) {
-    return [];
+    console.warn('purgeLegacyLocalStorage error:', e);
   }
 };
 
-export const markUserAsDeleted = (userId) => {
-  if (!userId) return;
-  const list = getDeletedUserIds();
-  if (!list.includes(userId)) {
-    list.push(userId);
-    localStorage.setItem(STORAGE_KEY_DELETED_USERS, JSON.stringify(list));
-  }
-};
+// Immediately purge on module evaluation
+purgeLegacyLocalStorage();
 
-// Initialize multi-user storage cleanly without mock users
-export const initializeMultiUserStorage = () => {
+// --- Auth Session Management APIs (The ONLY persistent localStorage entry) ---
+
+export const getAuthSession = () => {
   try {
-    const rawUsers = localStorage.getItem(STORAGE_KEY_USERS);
-    return rawUsers ? JSON.parse(rawUsers) : [];
+    const raw = localStorage.getItem(STORAGE_KEY_AUTH_SESSION);
+    if (!raw) return null;
+    return JSON.parse(raw);
   } catch (e) {
-    return [];
+    return null;
   }
 };
 
+export const setAuthSession = (userId) => {
+  if (!userId) {
+    clearAuthSession();
+    return null;
+  }
+  const session = {
+    userId,
+    loggedInAt: new Date().toISOString()
+  };
+  try {
+    localStorage.setItem(STORAGE_KEY_AUTH_SESSION, JSON.stringify(session));
+  } catch (e) {
+    console.warn('setAuthSession error:', e);
+  }
+  return session;
+};
 
-// --- Multi-User Management APIs ---
+export const clearAuthSession = () => {
+  try {
+    localStorage.removeItem(STORAGE_KEY_AUTH_SESSION);
+  } catch (e) {
+    console.warn('clearAuthSession error:', e);
+  }
+};
+
+// --- Multi-User Management APIs (Powered by Supabase Cloud) ---
 
 export const getUsersList = () => {
-  initializeMultiUserStorage();
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY_USERS);
-    return raw ? JSON.parse(raw) : [];
-  } catch (e) {
-    return [];
-  }
+  return _runtimeMemory.users || [];
 };
 
 export const getActiveUserId = () => {
-  initializeMultiUserStorage();
-  const id = localStorage.getItem(STORAGE_KEY_ACTIVE_USER);
-  if (id) return id;
-  const users = getUsersList();
-  const firstId = users[0]?.id || DEFAULT_USER_ID;
-  localStorage.setItem(STORAGE_KEY_ACTIVE_USER, firstId);
-  return firstId;
+  const session = getAuthSession();
+  return session?.userId || null;
 };
 
 export const setActiveUserId = (userId) => {
-  localStorage.setItem(STORAGE_KEY_ACTIVE_USER, userId);
+  if (userId) {
+    setAuthSession(userId);
+  } else {
+    clearAuthSession();
+  }
   return userId;
 };
 
-export const createNewUser = (userData) => {
-  const users = getUsersList();
+export const createNewUser = async (userData) => {
   const newId = `user-${Date.now()}`;
   const newUser = {
     id: newId,
     username: userData.username?.trim() || userData.name?.trim() || `user_${Date.now().toString().slice(-4)}`,
-    name: userData.name?.trim() || userData.username?.trim() || `นักกีฬาคนที่ ${users.length + 1}`,
+    name: userData.name?.trim() || userData.username?.trim() || 'สมาชิกใหม่',
     email: userData.email?.trim() || '',
     pinCode: userData.password?.trim() || userData.pinCode?.trim() || '',
     avatar: userData.avatar || '🏋️‍♂️',
+    customAvatarUrl: userData.customAvatarUrl || null,
     gender: userData.gender || 'MALE',
-    age: Number(userData.age) || 25,
+    age: Number(userData.age) || 26,
     weightKg: Number(userData.weightKg) || 70,
     targetWeightKg: Number(userData.targetWeightKg) || 70,
     heightCm: Number(userData.heightCm) || 175,
@@ -103,57 +148,50 @@ export const createNewUser = (userData) => {
     ]
   };
 
-  const updatedUsers = [...users, newUser];
-  localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(updatedUsers));
-  localStorage.setItem(`fittrainer_user_profile_${newId}`, JSON.stringify(newUser));
-  localStorage.setItem(`fittrainer_workout_logs_${newId}`, JSON.stringify([]));
-  localStorage.setItem(`fittrainer_custom_plans_${newId}`, JSON.stringify([]));
-  localStorage.setItem(STORAGE_KEY_ACTIVE_USER, newId);
+  // Populate runtime memory
+  _runtimeMemory.users.push(newUser);
+  _runtimeMemory.profiles[newId] = newUser;
+  _runtimeMemory.workoutLogs[newId] = [];
+  _runtimeMemory.customPlans[newId] = [];
+  _runtimeMemory.customExercises[newId] = [];
+  setAuthSession(newId);
 
-  // Auto-sync new user profile immediately to Supabase Cloud
-  syncProfileToSupabase(newUser);
+  // Sync profile directly to Supabase Cloud
+  await syncProfileToSupabase(newUser);
 
-  return { newUser, updatedUsers };
+  return { newUser, updatedUsers: _runtimeMemory.users };
 };
 
-// Sync all registered profiles from Supabase Cloud to local device
+// Sync all registered profiles from Supabase Cloud to local runtime memory
 export const syncCloudProfilesToLocal = async () => {
   try {
     const cloudProfiles = await fetchAllProfilesFromSupabase();
-    if (!cloudProfiles || !cloudProfiles.length) return getUsersList();
+    if (!cloudProfiles || !cloudProfiles.length) {
+      return _runtimeMemory.users;
+    }
 
-    const deletedIds = new Set(getDeletedUserIds());
-    const localUsers = getUsersList().filter((u) => !deletedIds.has(u.id));
-    const userMap = new Map();
-
-    localUsers.forEach((u) => userMap.set(u.id, u));
+    _runtimeMemory.users = cloudProfiles.map((cp) => ({
+      ...cp,
+      hasPin: Boolean(cp.pinCode && String(cp.pinCode).trim().length > 0)
+    }));
 
     cloudProfiles.forEach((cp) => {
-      if (deletedIds.has(cp.id)) return; // Never restore deleted user!
-
-      const mergedProfile = {
-        ...userMap.get(cp.id),
+      _runtimeMemory.profiles[cp.id] = {
         ...cp,
         hasPin: Boolean(cp.pinCode && String(cp.pinCode).trim().length > 0)
       };
-      userMap.set(cp.id, mergedProfile);
-      localStorage.setItem(`fittrainer_user_profile_${cp.id}`, JSON.stringify(mergedProfile));
     });
 
-    const mergedUsers = Array.from(userMap.values());
-    localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(mergedUsers));
-    return mergedUsers;
+    return _runtimeMemory.users;
   } catch (e) {
     console.warn('syncCloudProfilesToLocal error:', e);
-    return getUsersList();
+    return _runtimeMemory.users;
   }
 };
 
-// Pull down user logs, plans, and custom exercises from Supabase to local device
+// Pull down user logs, plans, and custom exercises from Supabase to local runtime memory
 export const syncUserDataFromCloudToLocal = async (userId) => {
-  if (!userId) return;
-  const deletedIds = new Set(getDeletedUserIds());
-  if (deletedIds.has(userId)) return null;
+  if (!userId) return null;
 
   try {
     const [profile, logs, plans, customExs] = await Promise.all([
@@ -164,31 +202,34 @@ export const syncUserDataFromCloudToLocal = async (userId) => {
     ]);
 
     if (profile) {
-      localStorage.setItem(`fittrainer_user_profile_${userId}`, JSON.stringify(profile));
-      const users = getUsersList();
-      const existingIdx = users.findIndex((u) => u.id === userId);
-      const userSummary = {
+      const formattedProfile = {
         ...profile,
-        hasPin: Boolean(profile.pinCode && profile.pinCode.trim().length > 0)
+        hasPin: Boolean(profile.pinCode && String(profile.pinCode).trim().length > 0)
       };
+      _runtimeMemory.profiles[userId] = formattedProfile;
+      const existingIdx = _runtimeMemory.users.findIndex((u) => u.id === userId);
       if (existingIdx >= 0) {
-        users[existingIdx] = { ...users[existingIdx], ...userSummary };
+        _runtimeMemory.users[existingIdx] = formattedProfile;
       } else {
-        users.push(userSummary);
+        _runtimeMemory.users.push(formattedProfile);
       }
-      localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(users));
     }
     if (Array.isArray(logs)) {
-      localStorage.setItem(`fittrainer_workout_logs_${userId}`, JSON.stringify(logs));
+      _runtimeMemory.workoutLogs[userId] = logs;
     }
     if (Array.isArray(plans)) {
-      localStorage.setItem(`fittrainer_custom_plans_${userId}`, JSON.stringify(plans));
+      _runtimeMemory.customPlans[userId] = plans;
     }
     if (Array.isArray(customExs)) {
-      localStorage.setItem(`fittrainer_custom_exercises_${userId}`, JSON.stringify(customExs));
+      _runtimeMemory.customExercises[userId] = customExs;
     }
 
-    return { profile, logs: logs || [], plans: plans || [], customExs: customExs || [] };
+    return {
+      profile: _runtimeMemory.profiles[userId] || profile,
+      logs: _runtimeMemory.workoutLogs[userId] || [],
+      plans: _runtimeMemory.customPlans[userId] || [],
+      customExs: _runtimeMemory.customExercises[userId] || []
+    };
   } catch (e) {
     console.warn('syncUserDataFromCloudToLocal error:', e);
     return null;
@@ -198,61 +239,49 @@ export const syncUserDataFromCloudToLocal = async (userId) => {
 export const deleteUser = async (userId) => {
   if (!userId) return { activeId: getActiveUserId(), updatedUsers: getUsersList() };
 
-  // Mark user ID as deleted so cloud sync will never restore it
-  markUserAsDeleted(userId);
+  // Remove from runtime memory
+  _runtimeMemory.users = _runtimeMemory.users.filter((u) => u.id !== userId);
+  delete _runtimeMemory.profiles[userId];
+  delete _runtimeMemory.workoutLogs[userId];
+  delete _runtimeMemory.customPlans[userId];
+  delete _runtimeMemory.customExercises[userId];
+  delete _runtimeMemory.aiChat[userId];
 
-  const users = getUsersList();
-  const updatedUsers = users.filter((u) => u.id !== userId);
-
-  localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(updatedUsers));
-
-  // Clean up scoped local data
-  localStorage.removeItem(`fittrainer_user_profile_${userId}`);
-  localStorage.removeItem(`fittrainer_workout_logs_${userId}`);
-  localStorage.removeItem(`fittrainer_custom_plans_${userId}`);
-  localStorage.removeItem(`fittrainer_custom_exercises_${userId}`);
-  localStorage.removeItem(`fittrainer_ai_chat_${userId}`);
-
-  // Permanently delete profile and linked data from Supabase Cloud
+  // Permanently delete profile and linked records from Supabase Cloud
   try {
     await deleteProfileFromSupabase(userId);
   } catch (err) {
     console.warn('Supabase cloud user delete warning:', err);
   }
 
-  // If deleted user was active, switch to first available user or null
+  // Update active session if active user was deleted
   let activeId = getActiveUserId();
-  if (activeId === userId || !updatedUsers.some((u) => u.id === activeId)) {
-    activeId = updatedUsers.length > 0 ? updatedUsers[0].id : null;
+  if (activeId === userId) {
+    activeId = _runtimeMemory.users.length > 0 ? _runtimeMemory.users[0].id : null;
     if (activeId) {
-      setActiveUserId(activeId);
+      setAuthSession(activeId);
     } else {
-      localStorage.removeItem(STORAGE_KEY_ACTIVE_USER);
+      clearAuthSession();
     }
   }
 
-  return { activeId, updatedUsers };
+  return { activeId, updatedUsers: _runtimeMemory.users };
 };
 
-// --- Scoped Data APIs (Accepting optional userId) ---
+// --- Scoped Data APIs (Supabase Cloud + In-Memory) ---
 
 export const getWorkoutLogs = (userId = getActiveUserId()) => {
   if (!userId) return [];
-  const key = `fittrainer_workout_logs_${userId}`;
-  const data = localStorage.getItem(key);
-  if (!data) return [];
-  try {
-    return JSON.parse(data);
-  } catch (e) {
-    return [];
-  }
+  return _runtimeMemory.workoutLogs[userId] || [];
 };
 
 export const saveWorkoutLog = (newLog, userId = getActiveUserId()) => {
-  const key = `fittrainer_workout_logs_${userId}`;
-  const logs = getWorkoutLogs(userId);
-  const updatedLogs = [newLog, ...logs];
-  localStorage.setItem(key, JSON.stringify(updatedLogs));
+  if (!userId) return [];
+  const currentLogs = _runtimeMemory.workoutLogs[userId] || [];
+  const updatedLogs = [newLog, ...currentLogs];
+  _runtimeMemory.workoutLogs[userId] = updatedLogs;
+
+  // Sync to Supabase Cloud directly
   syncWorkoutLogToSupabase(newLog, userId);
   return updatedLogs;
 };
@@ -318,26 +347,19 @@ export const importWorkoutLogs = async (jsonData, userId = getActiveUserId()) =>
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
 
-  const key = `fittrainer_workout_logs_${effectiveUserId}`;
-  localStorage.setItem(key, JSON.stringify(mergedLogs));
+  _runtimeMemory.workoutLogs[effectiveUserId] = mergedLogs;
 
   return { mergedLogs, count: logsToImport.length, newCount };
 };
 
 export const getCustomPlans = (userId = getActiveUserId()) => {
-  const key = `fittrainer_custom_plans_${userId}`;
-  const data = localStorage.getItem(key);
-  if (!data) return [];
-  try {
-    return JSON.parse(data);
-  } catch (e) {
-    return [];
-  }
+  if (!userId) return [];
+  return _runtimeMemory.customPlans[userId] || [];
 };
 
 export const saveCustomPlan = (plan, userId = getActiveUserId()) => {
-  const key = `fittrainer_custom_plans_${userId}`;
-  const plans = getCustomPlans(userId);
+  if (!userId) return [];
+  const plans = _runtimeMemory.customPlans[userId] || [];
   const existingIndex = plans.findIndex((p) => p.id === plan.id);
   let updated;
   if (existingIndex >= 0) {
@@ -346,105 +368,87 @@ export const saveCustomPlan = (plan, userId = getActiveUserId()) => {
   } else {
     updated = [...plans, plan];
   }
-  localStorage.setItem(key, JSON.stringify(updated));
+  _runtimeMemory.customPlans[userId] = updated;
+
+  // Sync to Supabase Cloud
   syncCustomPlanToSupabase(plan, userId);
   return updated;
 };
 
 export const deleteCustomPlan = (planId, userId = getActiveUserId()) => {
-  const key = `fittrainer_custom_plans_${userId}`;
-  const plans = getCustomPlans(userId);
+  if (!userId) return [];
+  const plans = _runtimeMemory.customPlans[userId] || [];
   const updated = plans.filter((p) => p.id !== planId);
-  localStorage.setItem(key, JSON.stringify(updated));
+  _runtimeMemory.customPlans[userId] = updated;
+
+  // Delete from Supabase Cloud
   deleteCustomPlanFromSupabase(planId, userId);
   return updated;
 };
 
 export const getUserProfile = (userId = getActiveUserId()) => {
-  initializeMultiUserStorage();
-  const key = `fittrainer_user_profile_${userId}`;
-  const data = localStorage.getItem(key);
-  if (!data) {
-    const users = getUsersList();
-    const found = users.find((u) => u.id === userId);
-    if (found) {
-      localStorage.setItem(key, JSON.stringify(found));
-      return found;
-    }
-    return {
-      id: userId,
-      name: 'Fitness Explorer',
-      avatar: '🏋️‍♂️',
-      weightKg: 70,
-      heightCm: 175,
-      streakDays: 1,
-      weightHistory: [{ date: new Date().toISOString().slice(0, 10), weightKg: 70 }]
-    };
-  }
-  try {
-    return JSON.parse(data);
-  } catch (e) {
-    return { id: userId, name: 'Fitness Explorer', avatar: '🏋️‍♂️', weightKg: 70, heightCm: 175, streakDays: 1 };
-  }
+  if (!userId) return null;
+  if (_runtimeMemory.profiles[userId]) return _runtimeMemory.profiles[userId];
+  const found = _runtimeMemory.users.find((u) => u.id === userId);
+  if (found) return found;
+
+  return {
+    id: userId,
+    name: 'สมาชิก',
+    avatar: '🏋️‍♂️',
+    weightKg: 70,
+    heightCm: 175,
+    streakDays: 1,
+    weightHistory: [{ date: new Date().toISOString().slice(0, 10), weightKg: 70 }]
+  };
 };
 
 export const saveUserProfile = (profile, userId = getActiveUserId()) => {
-  const key = `fittrainer_user_profile_${userId}`;
+  if (!userId) return profile;
   const profileToSave = { ...profile, id: userId };
-  localStorage.setItem(key, JSON.stringify(profileToSave));
-  syncProfileToSupabase(profileToSave);
+  _runtimeMemory.profiles[userId] = profileToSave;
 
-  // Sync users list summary so Navbar user switcher reflects updated name / avatar / weight
-  const users = getUsersList();
-  const userIdx = users.findIndex((u) => u.id === userId);
-  if (userIdx >= 0) {
-    users[userIdx] = {
-      ...users[userIdx],
+  // Update in users list
+  const existingIdx = _runtimeMemory.users.findIndex((u) => u.id === userId);
+  if (existingIdx >= 0) {
+    _runtimeMemory.users[existingIdx] = {
+      ..._runtimeMemory.users[existingIdx],
       name: profileToSave.name,
-      avatar: profileToSave.avatar || users[userIdx].avatar || '🏋️‍♂️',
+      avatar: profileToSave.avatar || _runtimeMemory.users[existingIdx].avatar || '🏋️‍♂️',
+      customAvatarUrl: profileToSave.customAvatarUrl,
       weightKg: profileToSave.weightKg,
       targetWeightKg: profileToSave.targetWeightKg,
       goal: profileToSave.goal,
       streakDays: profileToSave.streakDays,
-      hasPin: Boolean(profileToSave.pinCode && profileToSave.pinCode.trim().length > 0),
+      hasPin: Boolean(profileToSave.pinCode && profileToSave.pinCode.trim().length > 0)
     };
-    localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(users));
   }
+
+  // Sync directly to Supabase Cloud
+  syncProfileToSupabase(profileToSave);
 
   return profileToSave;
 };
 
 export const getAIChatHistory = (userId = getActiveUserId()) => {
-  const key = `fittrainer_ai_chat_${userId}`;
-  const data = localStorage.getItem(key);
-  if (!data) return [];
-  try {
-    return JSON.parse(data);
-  } catch (e) {
-    return [];
-  }
+  if (!userId) return [];
+  return _runtimeMemory.aiChat[userId] || [];
 };
 
 export const saveAIChatHistory = (messages, userId = getActiveUserId()) => {
-  const key = `fittrainer_ai_chat_${userId}`;
-  localStorage.setItem(key, JSON.stringify(messages));
+  if (!userId) return;
+  _runtimeMemory.aiChat[userId] = messages;
 };
 
 // --- Custom Exercises Storage APIs ---
 export const getCustomExercises = (userId = getActiveUserId()) => {
-  const key = `fittrainer_custom_exercises_${userId}`;
-  const data = localStorage.getItem(key);
-  if (!data) return [];
-  try {
-    return JSON.parse(data);
-  } catch (e) {
-    return [];
-  }
+  if (!userId) return [];
+  return _runtimeMemory.customExercises[userId] || [];
 };
 
 export const saveCustomExercise = (exercise, userId = getActiveUserId()) => {
-  const key = `fittrainer_custom_exercises_${userId}`;
-  const customExercises = getCustomExercises(userId);
+  if (!userId) return [];
+  const customExercises = _runtimeMemory.customExercises[userId] || [];
   const existingIdx = customExercises.findIndex((ex) => ex.id === exercise.id);
   let updated;
   if (existingIdx >= 0) {
@@ -453,16 +457,20 @@ export const saveCustomExercise = (exercise, userId = getActiveUserId()) => {
   } else {
     updated = [exercise, ...customExercises];
   }
-  localStorage.setItem(key, JSON.stringify(updated));
+  _runtimeMemory.customExercises[userId] = updated;
+
+  // Sync to Supabase Cloud
   syncCustomExerciseToSupabase(exercise, userId);
   return updated;
 };
 
 export const deleteCustomExercise = (exerciseId, userId = getActiveUserId()) => {
-  const key = `fittrainer_custom_exercises_${userId}`;
-  const customExercises = getCustomExercises(userId);
+  if (!userId) return [];
+  const customExercises = _runtimeMemory.customExercises[userId] || [];
   const updated = customExercises.filter((ex) => ex.id !== exerciseId);
-  localStorage.setItem(key, JSON.stringify(updated));
+  _runtimeMemory.customExercises[userId] = updated;
+
+  // Delete from Supabase Cloud
   deleteCustomExerciseFromSupabase(exerciseId, userId);
   return updated;
 };
@@ -475,7 +483,7 @@ export const getAllExercises = (userId = getActiveUserId()) => {
 // --- User PIN Verification ---
 export const verifyUserPin = (userId, inputPin) => {
   const profile = getUserProfile(userId);
-  if (!profile.pinCode || !profile.pinCode.trim()) return true; // No PIN set
+  if (!profile || !profile.pinCode || !profile.pinCode.trim()) return true; // No PIN set
   return profile.pinCode.trim() === (inputPin || '').trim();
 };
 
@@ -503,7 +511,7 @@ export const getUserRank = (userId = getActiveUserId()) => {
 // --- User Achievement Badges Calculation ---
 export const getUserAchievements = (userId = getActiveUserId()) => {
   const logs = getWorkoutLogs(userId);
-  const profile = getUserProfile(userId);
+  const profile = getUserProfile(userId) || {};
   const customPlans = getCustomPlans(userId);
   const customExercises = getCustomExercises(userId);
 
@@ -585,7 +593,7 @@ export const exportUserData = (userId = getActiveUserId()) => {
   const customExercises = getCustomExercises(userId);
 
   const exportPayload = {
-    version: '2.0',
+    version: '3.0',
     exportDate: new Date().toISOString(),
     profile,
     workoutLogs,
@@ -596,13 +604,13 @@ export const exportUserData = (userId = getActiveUserId()) => {
   const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(exportPayload, null, 2))}`;
   const downloadAnchor = document.createElement('a');
   downloadAnchor.setAttribute('href', jsonString);
-  downloadAnchor.setAttribute('download', `FitTrainerAI_User_${profile.name || userId}_${new Date().toISOString().slice(0, 10)}.json`);
+  downloadAnchor.setAttribute('download', `FitTrainerAI_Cloud_${profile?.name || userId}_${new Date().toISOString().slice(0, 10)}.json`);
   document.body.appendChild(downloadAnchor);
   downloadAnchor.click();
   downloadAnchor.remove();
 };
 
-// --- User Data Restore (Import) ---
+// --- User Data Restore (Import directly to Supabase Cloud) ---
 export const importUserData = async (jsonData, targetUserId = getActiveUserId()) => {
   if (!jsonData || typeof jsonData !== 'object') {
     throw new Error('รูปแบบไฟล์ JSON ไม่ถูกต้อง');
@@ -617,7 +625,7 @@ export const importUserData = async (jsonData, targetUserId = getActiveUserId())
   const userId = targetUserId || profile.id || `user-${Date.now()}`;
   const profileToSave = { ...profile, id: userId };
 
-  localStorage.setItem(`fittrainer_user_profile_${userId}`, JSON.stringify(profileToSave));
+  _runtimeMemory.profiles[userId] = profileToSave;
 
   // Sync profile directly to Supabase Cloud
   await syncProfileToSupabase(profileToSave);
@@ -632,78 +640,41 @@ export const importUserData = async (jsonData, targetUserId = getActiveUserId())
       totalTonnageKg: Number(l.totalTonnageKg ?? l.total_tonnage_kg) || 0,
       exercises: Array.isArray(l.exercises) ? l.exercises : (Array.isArray(l.exercises_data) ? l.exercises_data : [])
     }));
-    localStorage.setItem(`fittrainer_workout_logs_${userId}`, JSON.stringify(formattedLogs));
+    _runtimeMemory.workoutLogs[userId] = formattedLogs;
 
     // Upload each log to Supabase Cloud
     await Promise.all(formattedLogs.map((log) => syncWorkoutLogToSupabase(log, userId)));
   }
 
   if (Array.isArray(customPlans)) {
-    localStorage.setItem(`fittrainer_custom_plans_${userId}`, JSON.stringify(customPlans));
+    _runtimeMemory.customPlans[userId] = customPlans;
     await Promise.all(customPlans.map((plan) => syncCustomPlanToSupabase(plan, userId)));
   }
 
   if (Array.isArray(customExercises)) {
-    localStorage.setItem(`fittrainer_custom_exercises_${userId}`, JSON.stringify(customExercises));
+    _runtimeMemory.customExercises[userId] = customExercises;
     await Promise.all(customExercises.map((ex) => syncCustomExerciseToSupabase(ex, userId)));
   }
 
-  // Update Users summary list
-  const users = getUsersList();
-  const existingIdx = users.findIndex((u) => u.id === userId);
+  // Update Users summary in memory
+  const existingIdx = _runtimeMemory.users.findIndex((u) => u.id === userId);
+  const userSummary = {
+    id: userId,
+    name: profileToSave.name,
+    avatar: profileToSave.avatar || '🏋️‍♂️',
+    customAvatarUrl: profileToSave.customAvatarUrl,
+    weightKg: profileToSave.weightKg,
+    targetWeightKg: profileToSave.targetWeightKg,
+    goal: profileToSave.goal,
+    streakDays: profileToSave.streakDays || 1,
+    hasPin: Boolean(profileToSave.pinCode && profileToSave.pinCode.trim().length > 0)
+  };
+
   if (existingIdx >= 0) {
-    users[existingIdx] = {
-      ...users[existingIdx],
-      name: profileToSave.name,
-      avatar: profileToSave.avatar || '🏋️‍♂️',
-      weightKg: profileToSave.weightKg,
-      targetWeightKg: profileToSave.targetWeightKg,
-      goal: profileToSave.goal,
-      streakDays: profileToSave.streakDays || 1,
-      hasPin: Boolean(profileToSave.pinCode && profileToSave.pinCode.trim().length > 0)
-    };
+    _runtimeMemory.users[existingIdx] = userSummary;
   } else {
-    users.push({
-      id: userId,
-      name: profileToSave.name,
-      avatar: profileToSave.avatar || '🏋️‍♂️',
-      weightKg: profileToSave.weightKg,
-      targetWeightKg: profileToSave.targetWeightKg,
-      goal: profileToSave.goal,
-      streakDays: profileToSave.streakDays || 1,
-      hasPin: Boolean(profileToSave.pinCode && profileToSave.pinCode.trim().length > 0)
-    });
+    _runtimeMemory.users.push(userSummary);
   }
-  localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(users));
 
   return profileToSave;
 };
-
-// --- Auth Session Management APIs ---
-const STORAGE_KEY_AUTH_SESSION = 'fittrainer_auth_session';
-
-export const getAuthSession = () => {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY_AUTH_SESSION);
-    if (!raw) return null;
-    return JSON.parse(raw);
-  } catch (e) {
-    return null;
-  }
-};
-
-export const setAuthSession = (userId) => {
-  const session = {
-    userId,
-    loggedInAt: new Date().toISOString()
-  };
-  localStorage.setItem(STORAGE_KEY_AUTH_SESSION, JSON.stringify(session));
-  return session;
-};
-
-export const clearAuthSession = () => {
-  localStorage.removeItem(STORAGE_KEY_AUTH_SESSION);
-};
-
-
-

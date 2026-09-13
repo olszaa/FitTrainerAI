@@ -3,7 +3,7 @@ import { getSupabaseClient, isSupabaseConfigured } from '../utils/supabaseClient
 // Helper to check connection health
 export const testSupabaseConnection = async () => {
   if (!isSupabaseConfigured()) {
-    return { success: false, message: 'ยังไม่ได้ระบุ VITE_SUPABASE_URL หรือ ANON_KEY' };
+    return { success: false, message: 'ยังไม่ได้ระบุ VITE_SUPABASE_URL หรือ VITE_SUPABASE_ANON_KEY ในระบบ' };
   }
 
   const client = getSupabaseClient();
@@ -12,13 +12,18 @@ export const testSupabaseConnection = async () => {
   }
 
   try {
-    const { error } = await client.from('profiles').select('id').limit(1);
+    const queryPromise = client.from('profiles').select('id').limit(1);
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Connection timed out (หมดเวลาเชื่อมต่อกับ Cloud Database)')), 8000)
+    );
+
+    const { error } = await Promise.race([queryPromise, timeoutPromise]);
     if (error && error.code !== 'PGRST116') {
       return { success: false, message: `ข้อผิดพลาดจาก Supabase: ${error.message}` };
     }
     return { success: true, message: 'เชื่อมต่อ Supabase Database สำเร็จแล้ว! ⚡' };
   } catch (e) {
-    return { success: false, message: `ไม่สามารถเชื่อมต่อได้: ${e.message}` };
+    return { success: false, message: `ไม่สามารถเชื่อมต่อฐานข้อมูลได้: ${e.message || e}` };
   }
 };
 

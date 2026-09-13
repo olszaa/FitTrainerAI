@@ -11,6 +11,8 @@ import UserProfileModal from './components/UserProfileModal';
 import AdminMemberModal from './components/AdminMemberModal';
 import BodyAndMuscles from './components/BodyAndMuscles';
 import LoginScreen from './components/LoginScreen';
+import DatabaseErrorScreen from './components/DatabaseErrorScreen';
+import { testSupabaseConnection } from './services/supabaseService';
 import {
   getUsersList,
   getActiveUserId,
@@ -27,12 +29,20 @@ import {
   clearAuthSession,
   syncCloudProfilesToLocal,
   syncUserDataFromCloudToLocal,
-  syncProfileToSupabase
+  syncProfileToSupabase,
+  purgeLegacyLocalStorage
 } from './utils/storage';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('body'); // Default tab set to 'body' (สรีระ & กล้ามเนื้อ)
-  
+
+  // Database Connection State (Pure Cloud Architecture 100%)
+  const [dbState, setDbState] = useState({
+    isChecking: true,
+    isConnected: true,
+    error: null
+  });
+
   // Auth & Session State
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     const session = getAuthSession();
@@ -42,43 +52,70 @@ export default function App() {
   // Multi-user state
   const [activeUserId, setActiveUserIdState] = useState(() => {
     const session = getAuthSession();
-    return session?.userId || getActiveUserId();
+    return session?.userId || null;
   });
 
-  const [usersList, setUsersList] = useState(() => getUsersList());
-  const [userProfile, setUserProfile] = useState(() => getUserProfile(activeUserId));
-  const [workoutLogs, setWorkoutLogs] = useState(() => getWorkoutLogs(activeUserId));
+  const [usersList, setUsersList] = useState([]);
+  const [userProfile, setUserProfile] = useState(null);
+  const [workoutLogs, setWorkoutLogs] = useState([]);
 
-  // Fetch cloud profiles on app mount so all registered accounts are available across devices
-  useEffect(() => {
-    const fetchCloudProfiles = async () => {
+  // Check Supabase Cloud connection & initialize cloud data
+  const checkDatabaseConnection = async () => {
+    setDbState({ isChecking: true, isConnected: true, error: null });
+    try {
+      // Clean up all obsolete localStorage mock data and legacy caches
+      purgeLegacyLocalStorage();
+
+      // Test connection to Supabase Cloud Database
+      const result = await testSupabaseConnection();
+      if (!result.success) {
+        setDbState({
+          isChecking: false,
+          isConnected: false,
+          error: result.message
+        });
+        return;
+      }
+
+      setDbState({ isChecking: false, isConnected: true, error: null });
+
+      // Fetch cloud profiles
       const cloudUsers = await syncCloudProfilesToLocal();
       if (cloudUsers) {
         setUsersList(cloudUsers);
       }
-    };
-    fetchCloudProfiles();
-  }, []);
 
-  // Fetch active user profile & logs from Supabase Cloud whenever active user is loaded
-  useEffect(() => {
-    if (isAuthenticated && activeUserId) {
-      syncUserDataFromCloudToLocal(activeUserId).then((res) => {
-        if (res && res.profile) {
-          setUserProfile(res.profile);
-          setWorkoutLogs(res.logs || []);
-        } else if (!res || !res.profile) {
-          const allProfiles = getUsersList();
-          if (allProfiles.length > 0 && allProfiles.some((u) => u.id === activeUserId)) {
-            setUserProfile(getUserProfile(activeUserId));
-            setWorkoutLogs(getWorkoutLogs(activeUserId));
-          } else {
-            handleLogout();
-          }
+      // Restore active user session from Cloud
+      const session = getAuthSession();
+      if (session?.userId) {
+        const userData = await syncUserDataFromCloudToLocal(session.userId);
+        if (userData && userData.profile) {
+          setUserProfile(userData.profile);
+          setWorkoutLogs(userData.logs || []);
+          setActiveUserIdState(session.userId);
+          setIsAuthenticated(true);
+        } else {
+          // Stale or deleted session
+          clearAuthSession();
+          setIsAuthenticated(false);
+          setActiveUserIdState(null);
         }
+      } else {
+        setIsAuthenticated(false);
+        setActiveUserIdState(null);
+      }
+    } catch (err) {
+      setDbState({
+        isChecking: false,
+        isConnected: false,
+        error: err?.message || 'ไม่สามารถติดต่อ Supabase Cloud Database ได้ โปรดติดต่อ Admin'
       });
     }
-  }, [activeUserId, isAuthenticated]);
+  };
+
+  useEffect(() => {
+    checkDatabaseConnection();
+  }, []);
 
   const [activeWorkout, setActiveWorkout] = useState(null);
   const [aiModalOpen, setAiModalOpen] = useState(false);
@@ -97,6 +134,10 @@ export default function App() {
 
   // Core user switch execution
   const doSwitchUser = async (newUserId) => {
+    if (!newUserId) {
+      handleLogout();
+      return;
+    }
     setActiveUserId(newUserId);
     setActiveUserIdState(newUserId);
     setActiveWorkout(null);
@@ -122,6 +163,7 @@ export default function App() {
   const handleLogout = () => {
     clearAuthSession();
     setIsAuthenticated(false);
+    setActiveUserIdState(null);
   };
 
   // Intercept switch attempt for PIN verification
@@ -152,19 +194,23 @@ export default function App() {
     }
   };
 
-  const handleCreateUser = (userData) => {
-    const { newUser, updatedUsers } = createNewUser(userData);
+  const handleCreateUser = async (userData) => {
+    const { newUser, updatedUsers } = await createNewUser(userData);
     setUsersList(updatedUsers);
     setAuthSession(newUser.id);
-    doSwitchUser(newUser.id);
+    await doSwitchUser(newUser.id);
   };
 
   const handleDeleteUser = async (userIdToDelete) => {
     try {
       const { activeId, updatedUsers } = await deleteUser(userIdToDelete);
       setUsersList(updatedUsers);
-      setAuthSession(activeId);
-      await doSwitchUser(activeId);
+      if (activeId) {
+        setAuthSession(activeId);
+        await doSwitchUser(activeId);
+      } else {
+        handleLogout();
+      }
     } catch (e) {
       alert(e.message || 'ไม่สามารถลบผู้ใช้งานได้');
     }
@@ -192,7 +238,36 @@ export default function App() {
     setActiveTab('body');
   };
 
-  // If not authenticated, display full Login Screen
+  // 1. Checking Database Connection Screen
+  if (dbState.isChecking) {
+    return (
+      <div className="min-h-screen bg-[#0a0c10] flex flex-col items-center justify-center text-slate-100 p-4 font-sans select-none">
+        <div className="flex flex-col items-center space-y-4 text-center">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-cyan-500 via-blue-500 to-lime-400 p-[2px] animate-spin shadow-xl shadow-cyan-500/20">
+            <div className="w-full h-full bg-[#0a0c10] rounded-2xl flex items-center justify-center text-2xl">
+              ⚡
+            </div>
+          </div>
+          <div className="space-y-1">
+            <h2 className="text-base sm:text-lg font-black text-white">กำลังเชื่อมต่อ Supabase Cloud Database...</h2>
+            <p className="text-xs text-slate-400">ระบบทำงานผ่าน 100% Cloud Database</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 2. Database Connection Error Screen (Contact Admin)
+  if (!dbState.isConnected) {
+    return (
+      <DatabaseErrorScreen
+        onRetry={checkDatabaseConnection}
+        errorMessage={dbState.error}
+      />
+    );
+  }
+
+  // 3. If not authenticated, display full Login Screen
   if (!isAuthenticated) {
     return (
       <LoginScreen
@@ -372,7 +447,7 @@ export default function App() {
             <span>Multi-User Workout Planner & Personal Trainer</span>
           </div>
           <div className="text-slate-400">
-            ผู้ใช้ปัจจุบัน: <span className="font-bold text-cyan-400">{userProfile?.name}</span> ({usersList.length} บัญชีในเครื่องนี้)
+            ผู้ใช้ปัจจุบัน: <span className="font-bold text-cyan-400">{userProfile?.name || 'ไม่มี'}</span> ({usersList.length} บัญชี Cloud Database)
           </div>
         </div>
       </footer>
