@@ -77,8 +77,6 @@ export default function App() {
         return;
       }
 
-      setDbState({ isChecking: false, isConnected: true, error: null });
-
       // Fetch cloud profiles
       const cloudUsers = await syncCloudProfilesToLocal();
       if (cloudUsers) {
@@ -104,6 +102,9 @@ export default function App() {
         setIsAuthenticated(false);
         setActiveUserIdState(null);
       }
+
+      // Mark check as complete after cloud data is loaded
+      setDbState({ isChecking: false, isConnected: true, error: null });
     } catch (err) {
       setDbState({
         isChecking: false,
@@ -279,6 +280,17 @@ export default function App() {
     );
   }
 
+  // Fallback safe user profile to prevent null access during loading
+  const effectiveProfile = userProfile || (activeUserId ? getUserProfile(activeUserId) : null) || {
+    id: activeUserId || 'member',
+    name: 'สมาชิก',
+    avatar: '🏋️‍♂️',
+    weightKg: 70,
+    heightCm: 175,
+    streakDays: 1,
+    weightHistory: []
+  };
+
   return (
     <div className="min-h-screen bg-[#0b0d12] text-slate-100 flex flex-col font-sans selection:bg-cyan-500 selection:text-slate-950">
       {/* Top Navbar Header */}
@@ -289,12 +301,12 @@ export default function App() {
         onOpenAIChat={() => setAiModalOpen(true)}
         onOpenProfile={handleOpenProfileModal}
         onOpenAdmin={() => setAdminModalOpen(true)}
-        userProfile={userProfile}
+        userProfile={effectiveProfile}
         usersList={usersList}
         activeUserId={activeUserId}
         onSwitchUser={handleSwitchUser}
         onLogout={handleLogout}
-        streakDays={userProfile.streakDays || 4}
+        streakDays={effectiveProfile?.streakDays || 1}
       />
 
       {/* Main Content Body (Scoped by activeUserId via React key) */}
@@ -308,7 +320,7 @@ export default function App() {
             previousLogs={workoutLogs}
             templateToOpen={templateToOpen}
             onClearTemplateToOpen={() => setTemplateToOpen(null)}
-            userProfile={userProfile}
+            userProfile={effectiveProfile}
           />
         )}
 
@@ -323,7 +335,7 @@ export default function App() {
           <BodyAndMuscles
             key={`body-${activeUserId}`}
             workoutLogs={workoutLogs}
-            userProfile={userProfile}
+            userProfile={effectiveProfile}
             onSaveProfile={handleSaveProfile}
             usersList={usersList}
             activeUserId={activeUserId}
@@ -352,7 +364,7 @@ export default function App() {
       <UserProfileModal
         isOpen={profileModalOpen}
         onClose={() => setProfileModalOpen(false)}
-        userProfile={userProfile}
+        userProfile={effectiveProfile}
         onSaveProfile={handleSaveProfile}
         usersList={usersList}
         activeUserId={activeUserId}
@@ -447,7 +459,7 @@ export default function App() {
             <span>Multi-User Workout Planner & Personal Trainer</span>
           </div>
           <div className="text-slate-400">
-            ผู้ใช้ปัจจุบัน: <span className="font-bold text-cyan-400">{userProfile?.name || 'ไม่มี'}</span> ({usersList.length} บัญชี Cloud Database)
+            ผู้ใช้ปัจจุบัน: <span className="font-bold text-cyan-400">{effectiveProfile?.name || 'ไม่มี'}</span> ({usersList.length} บัญชี Cloud Database)
           </div>
         </div>
       </footer>
