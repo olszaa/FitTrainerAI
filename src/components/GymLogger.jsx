@@ -327,7 +327,13 @@ export default function GymLogger({
   // Open setup screen for a routine
   const handleOpenSetup = (templateInput) => {
     if (!templateInput) return;
-    const latestCustom = (getCustomPlans() || []).find((p) => p.id === templateInput.id);
+    const customPlansList = getCustomPlans() || [];
+    const latestCustom = customPlansList.find(
+      (p) =>
+        p.id === templateInput.id ||
+        (p.nameTh && p.nameTh === (templateInput.nameTh || templateInput.name)) ||
+        (p.name && p.name === (templateInput.nameTh || templateInput.name))
+    );
     const template = latestCustom || templateInput;
     const setup = {
       id: template.id,
@@ -349,7 +355,8 @@ export default function GymLogger({
           ? templateEx.targetReps
           : parseInt(templateEx.targetReps, 10) || 10;
         const totalSets = isCardio ? cardioRounds : (Number(templateEx.targetSets) || 3);
-        const defaultWeight = Number(templateEx.defaultWeight) || 20;
+        const defaultWeight = typeof templateEx.defaultWeight === 'number' ? templateEx.defaultWeight : 20;
+        const targetRestSec = Number(templateEx.restSeconds) || Number(templateEx.targetRest) || 60;
 
         return {
           id: `setup-ex-${idx}-${Date.now()}`,
@@ -363,7 +370,7 @@ export default function GymLogger({
           cardioWorkSec: cardioWorkSec,
           cardioRestSec: cardioRestSec,
           cardioRounds: cardioRounds,
-          targetRest: 30,
+          targetRest: targetRestSec,
           sets: isCardio
             ? Array.from({ length: cardioRounds }).map((_, sIdx) => ({
                 id: `setup-set-${idx}-${sIdx + 1}`,
@@ -371,6 +378,14 @@ export default function GymLogger({
                 weight: 0,
                 reps: cardioWorkSec,
                 type: 'Normal',
+              }))
+            : (Array.isArray(templateEx.sets) && templateEx.sets.length > 0)
+            ? templateEx.sets.map((s, sIdx) => ({
+                id: s.id || `setup-set-${idx}-${sIdx + 1}`,
+                setNum: s.setNum || sIdx + 1,
+                weight: typeof s.weight === 'number' ? s.weight : defaultWeight,
+                reps: typeof s.reps === 'number' ? s.reps : (parseInt(s.reps, 10) || parsedReps),
+                type: s.type || (sIdx === 0 && templateEx.sets.length > 3 ? 'Warmup' : 'Normal'),
               }))
             : Array.from({ length: totalSets }).map((_, sIdx) => ({
                 id: `setup-set-${idx}-${sIdx + 1}`,
