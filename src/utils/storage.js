@@ -435,13 +435,13 @@ export const importWorkoutLogs = async (jsonData, userId = getActiveUserId()) =>
 };
 
 export const getCustomPlans = (userId = getActiveUserId()) => {
-  if (!userId) return [];
-  return _runtimeMemory.customPlans[userId] || [];
+  const effectiveUserId = userId || getActiveUserId() || _runtimeMemory.users[0]?.id || 'user-default';
+  return _runtimeMemory.customPlans[effectiveUserId] || [];
 };
 
 export const saveCustomPlan = (plan, userId = getActiveUserId()) => {
-  if (!userId) return [];
-  const plans = _runtimeMemory.customPlans[userId] || [];
+  const effectiveUserId = userId || getActiveUserId() || _runtimeMemory.users[0]?.id || 'user-default';
+  const plans = _runtimeMemory.customPlans[effectiveUserId] || [];
   const existingIndex = plans.findIndex((p) => p.id === plan.id);
   let updated;
   if (existingIndex >= 0) {
@@ -450,21 +450,21 @@ export const saveCustomPlan = (plan, userId = getActiveUserId()) => {
   } else {
     updated = [...plans, plan];
   }
-  _runtimeMemory.customPlans[userId] = updated;
+  _runtimeMemory.customPlans[effectiveUserId] = updated;
 
   // Sync to Supabase Cloud
-  syncCustomPlanToSupabase(plan, userId);
+  syncCustomPlanToSupabase(plan, effectiveUserId);
   return updated;
 };
 
 export const deleteCustomPlan = (planId, userId = getActiveUserId()) => {
-  if (!userId) return [];
-  const plans = _runtimeMemory.customPlans[userId] || [];
+  const effectiveUserId = userId || getActiveUserId() || _runtimeMemory.users[0]?.id || 'user-default';
+  const plans = _runtimeMemory.customPlans[effectiveUserId] || [];
   const updated = plans.filter((p) => p.id !== planId);
-  _runtimeMemory.customPlans[userId] = updated;
+  _runtimeMemory.customPlans[effectiveUserId] = updated;
 
   // Delete from Supabase Cloud
-  deleteCustomPlanFromSupabase(planId, userId);
+  deleteCustomPlanFromSupabase(planId, effectiveUserId);
   return updated;
 };
 
@@ -524,13 +524,13 @@ export const saveAIChatHistory = (messages, userId = getActiveUserId()) => {
 
 // --- Custom Exercises Storage APIs ---
 export const getCustomExercises = (userId = getActiveUserId()) => {
-  if (!userId) return [];
-  return _runtimeMemory.customExercises[userId] || [];
+  const effectiveUserId = userId || getActiveUserId() || _runtimeMemory.users[0]?.id || 'user-default';
+  return _runtimeMemory.customExercises[effectiveUserId] || [];
 };
 
 export const saveCustomExercise = (exercise, userId = getActiveUserId()) => {
-  if (!userId) return [];
-  const customExercises = _runtimeMemory.customExercises[userId] || [];
+  const effectiveUserId = userId || getActiveUserId() || _runtimeMemory.users[0]?.id || 'user-default';
+  const customExercises = _runtimeMemory.customExercises[effectiveUserId] || [];
   const existingIdx = customExercises.findIndex((ex) => ex.id === exercise.id);
   let updated;
   if (existingIdx >= 0) {
@@ -539,21 +539,21 @@ export const saveCustomExercise = (exercise, userId = getActiveUserId()) => {
   } else {
     updated = [exercise, ...customExercises];
   }
-  _runtimeMemory.customExercises[userId] = updated;
+  _runtimeMemory.customExercises[effectiveUserId] = updated;
 
   // Sync to Supabase Cloud
-  syncCustomExerciseToSupabase(exercise, userId);
+  syncCustomExerciseToSupabase(exercise, effectiveUserId);
   return updated;
 };
 
 export const deleteCustomExercise = (exerciseId, userId = getActiveUserId()) => {
-  if (!userId) return [];
-  const customExercises = _runtimeMemory.customExercises[userId] || [];
+  const effectiveUserId = userId || getActiveUserId() || _runtimeMemory.users[0]?.id || 'user-default';
+  const customExercises = _runtimeMemory.customExercises[effectiveUserId] || [];
   const updated = customExercises.filter((ex) => ex.id !== exerciseId);
-  _runtimeMemory.customExercises[userId] = updated;
+  _runtimeMemory.customExercises[effectiveUserId] = updated;
 
   // Delete from Supabase Cloud
-  deleteCustomExerciseFromSupabase(exerciseId, userId);
+  deleteCustomExerciseFromSupabase(exerciseId, effectiveUserId);
   return updated;
 };
 

@@ -89,6 +89,7 @@ export default function GymLogger({
   // If a template was triggered from PlanBuilder or AI Coach, automatically open its setup
   useEffect(() => {
     if (templateToOpen) {
+      setSetupSession(null);
       handleOpenSetup(templateToOpen);
       if (onClearTemplateToOpen) {
         onClearTemplateToOpen();
@@ -344,7 +345,7 @@ export default function GymLogger({
       targetMuscles: template.targetMuscles || [],
       splitTag: template.splitTag || '',
       exercises: (template.exercises || []).filter((templateEx) => templateEx && typeof templateEx === 'object').map((templateEx, idx) => {
-        const fullInfo = EXERCISE_DATABASE.find(
+        const fullInfo = getAllExercises().find(
           (e) => e.id === templateEx.exerciseId || e.id === templateEx.exerciseId?.replace('-cardio', '')
         ) || {};
         const isCardio = isCardioExercise({ category: fullInfo.category, exerciseId: templateEx.exerciseId });
