@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Home, Play, Pause, SkipForward, RotateCcw, Volume2, VolumeX, CheckCircle2, Flame, Award, Clock, Sparkles } from 'lucide-react';
 import { WORKOUT_TEMPLATES } from '../data/workoutTemplates';
-import { EXERCISE_DATABASE } from '../data/exerciseDatabase';
+import { EXERCISE_DATABASE, EXERCISE_IMAGE_MAP } from '../data/exerciseDatabase';
 import { soundManager } from '../utils/timerSound';
 import { estimateCaloriesBurned } from '../utils/fitnessCalculators';
 import { getCustomPlans } from '../utils/storage';
@@ -252,6 +252,9 @@ export default function HomeLogger({ onFinishSession, templateToOpen = null, onC
   // --- VIEW 2: ACTIVE GUIDED HOME WORKOUT PLAYER ---
   const currentEx = activeSession.exercises[currentExIndex];
   const nextEx = activeSession.exercises[currentExIndex + 1];
+  const currentExFull = EXERCISE_DATABASE.find((e) => e.id === currentEx?.exerciseId || e.id === currentEx?.exerciseId?.replace('-cardio', '')) || {};
+  const currentExVideo = currentEx?.videoUrl || currentExFull.videoUrl;
+  const currentExImage = currentEx?.imageUrl || currentExFull.imageUrl || EXERCISE_IMAGE_MAP[currentEx?.exerciseId] || `/exercises/${currentEx?.exerciseId?.replace(/-/g, '_')}.jpg`;
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
@@ -302,17 +305,28 @@ export default function HomeLogger({ onFinishSession, templateToOpen = null, onC
         {/* Big 3D Mannequin Visual & Countdown */}
         <div className="flex flex-col items-center justify-center my-2">
           <div className="relative w-48 h-48 sm:w-56 sm:h-56 rounded-3xl overflow-hidden border-2 border-lime-400/40 shadow-2xl mb-4 bg-slate-950">
-            <img
-              src={`/exercises/${currentEx.exerciseId?.replace(/-/g, '_')}.jpg`}
-              onError={(e) => {
-                e.target.onerror = null;
-                e.target.src = '/exercises/bench_press.jpg';
-              }}
-              alt={currentEx.name}
-              className={`w-full h-full object-cover object-center ${
-                !isPaused && !isRestPhase ? 'animate-workout-loop' : ''
-              }`}
-            />
+            {currentExVideo ? (
+              <video
+                src={currentExVideo}
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="w-full h-full object-cover object-center"
+              />
+            ) : (
+              <img
+                src={currentExImage}
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = '/exercises/default.jpg';
+                }}
+                alt={currentEx.name}
+                className={`w-full h-full object-cover object-center ${
+                  !isPaused && !isRestPhase ? 'animate-workout-loop' : ''
+                }`}
+              />
+            )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
             <div className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-black/70 backdrop-blur-md text-[10px] font-extrabold text-lime-300 border border-lime-400/30">
               3D ANATOMY

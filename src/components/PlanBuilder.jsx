@@ -561,7 +561,7 @@ export default function PlanBuilder({ onStartWorkoutPlan }) {
                         (e) => e.id === ex.exerciseId || e.id === ex.exerciseId?.replace('-cardio', '')
                       ) || {};
                       const isCardio = isCardioExercise({ category: fullInfo.category, exerciseId: ex.exerciseId });
-                      const imgSrc = EXERCISE_IMAGE_MAP[ex.exerciseId] || EXERCISE_IMAGE_MAP[fullInfo.id];
+                      const imgSrc = fullInfo.imageUrl || ex.imageUrl || EXERCISE_IMAGE_MAP[ex.exerciseId] || EXERCISE_IMAGE_MAP[fullInfo.id] || (ex.exerciseId ? `/exercises/${ex.exerciseId.replace(/-/g, '_')}.jpg` : '');
 
                       return (
                         <div
@@ -575,7 +575,11 @@ export default function PlanBuilder({ onStartWorkoutPlan }) {
                                 <img
                                   src={imgSrc}
                                   alt={fullInfo.name || ex.exerciseId}
-                                  className="w-10 h-10 rounded-xl object-cover border border-slate-700 shrink-0"
+                                  className="w-10 h-10 rounded-xl object-cover border border-slate-700 shrink-0 bg-slate-950"
+                                  onError={(e) => {
+                                    e.target.onerror = null;
+                                    e.target.src = '/exercises/default.jpg';
+                                  }}
                                 />
                               ) : (
                                 <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-cyan-400 font-black text-xs shrink-0">

@@ -2038,7 +2038,11 @@ export default function GymLogger({
 
     const isCurrentCardio = isCardioExercise(currentEx);
     const displayImageEx = (!isCurrentCardio && (playerPhase === 'REST' || playerPhase === 'READY') && nextEx) ? nextEx : currentEx;
-    const exImage = EXERCISE_IMAGE_MAP[displayImageEx?.exerciseId] || `/exercises/${displayImageEx?.exerciseId?.replace(/-/g, '_')}.jpg`;
+    const displayFullInfo = getAllExercises().find(
+      (e) => e.id === displayImageEx?.exerciseId || e.id === displayImageEx?.exerciseId?.replace('-cardio', '')
+    ) || {};
+    const exVideo = displayImageEx?.videoUrl || displayFullInfo.videoUrl;
+    const exImage = displayImageEx?.imageUrl || displayFullInfo.imageUrl || EXERCISE_IMAGE_MAP[displayImageEx?.exerciseId] || `/exercises/${displayImageEx?.exerciseId?.replace(/-/g, '_')}.jpg`;
 
     return (
       <div className="max-w-2xl mx-auto space-y-4 pb-20 px-2 sm:px-0">
@@ -2162,17 +2166,28 @@ export default function GymLogger({
             <div className={`relative w-48 h-48 sm:w-56 sm:h-56 rounded-3xl overflow-hidden border-2 shadow-2xl mb-4 bg-slate-950 ${
               isCurrentCardio ? 'border-orange-500/50' : 'border-slate-700/80'
             }`}>
-              <img
-                src={exImage}
-                onError={(e) => {
-                  e.target.onerror = null;
-                  e.target.src = '/exercises/bench_press.jpg';
-                }}
-                alt={displayImageEx?.name || 'Exercise'}
-                className={`w-full h-full object-cover object-center ${
-                  !isPaused && playerPhase === 'WORK' ? 'animate-workout-loop' : ''
-                }`}
-              />
+              {exVideo ? (
+                <video
+                  src={exVideo}
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  className="w-full h-full object-cover object-center"
+                />
+              ) : (
+                <img
+                  src={exImage}
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = '/exercises/default.jpg';
+                  }}
+                  alt={displayImageEx?.name || 'Exercise'}
+                  className={`w-full h-full object-cover object-center ${
+                    !isPaused && playerPhase === 'WORK' ? 'animate-workout-loop' : ''
+                  }`}
+                />
+              )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
               <div className={`absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-md backdrop-blur-md text-[10px] font-black tracking-wider ${
                 isCurrentCardio
