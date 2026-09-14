@@ -38396,6 +38396,408 @@ const RAW_EXERCISE_DATABASE = [
     ],
     tips: "หายใจเข้าขณะผ่อนน้ำหนัก และหายใจออกขณะออกแรงเกร็งดัน/ดึง",
     icon: '🏋️‍♂️'
+  },
+
+  // ==================== WORKOUT TEMPLATE ALIASES & CARDIO ====================
+  {
+    id: 'battle-rope-cardio',
+    name: "Battle Rope Waves Cardio",
+    nameTh: "โบกเชือกแบทเทิลโรปคาร์ดิโอ (Battle Rope Waves)",
+    category: 'CARDIO',
+    muscle: "Full Body & High Intensity Cardio",
+    secondaryMuscles: ["Shoulders", "Core"],
+    equipment: 'ROPE',
+    isGym: true,
+    isHome: true,
+    imageUrl: 'https://apilyfta.com/static/GymvisualPNG/39101101-Weighted-Push-up-with-Vest_Chest_small.png',
+    videoUrl: 'https://apilyfta.com/static/GymvisualMP4/39101201-Weighted-Push-up-with-Vest_Chest.mp4',
+    instructions: [
+      "จับด้ามเชือกทั้งสองข้าง ย่อตัวลงเล็กน้อย เกร็งแกนกลางลำตัวให้มั่นคง",
+      "ออกแรงโบกสะบัดแขนขึ้นลงอย่างต่อเนื่อง สร้างคลื่นเชือกที่สม่ำเสมอ",
+      "รักษาจังหวะการหายใจและคงความเร็วตลอดระยะเวลาที่กำหนด"
+    ],
+    tips: "ย่อเข่าเล็กน้อยและเกร็งหน้าท้องตลอดการสะบัดเชือกเพื่อป้องกันอาการปวดหลัง",
+    icon: '🪢'
+  },
+  {
+    id: 'cable-rowing-cardio',
+    name: "Cable Rowing Cardio",
+    nameTh: "พายเรือเคเบิลคาร์ดิโอปิดท้าย (Cable Rowing Cardio)",
+    category: 'CARDIO',
+    muscle: "Cardiovascular Endurance & Full Body",
+    secondaryMuscles: ["Back", "Legs", "Arms"],
+    equipment: 'CABLE',
+    isGym: true,
+    isHome: false,
+    imageUrl: 'https://apilyfta.com/static/GymvisualPNG/05961101-Lever-Seated-Fly_Chest_small.png',
+    videoUrl: 'https://apilyfta.com/static/GymvisualMP4/05961201-Lever-Seated-Fly_Chest-FIX_.mp4',
+    instructions: [
+      "นั่งบนเครื่องพายเรือ วางเท้าบนแท่นและจับด้ามพายให้แน่น",
+      "ถีบขาและดึงด้ามพายเข้าหาลำตัวอย่างต่อเนื่องในจังหวะสม่ำเสมอ",
+      "ผ่อนแขนและงอเข่ากลับสู่จุดเริ่มต้นแล้วออกแรงพายซ้ำ"
+    ],
+    tips: "หายใจออกขณะดึงเข้าหาตัว และหายใจเข้าขณะผ่อนกลับ",
+    icon: '🚣‍♂️'
+  },
+  {
+    id: 'seated-row',
+    name: "Seated Cable Row",
+    nameTh: "นั่งพายสายเคเบิลดึงเข้าหาลำตัว (Seated Cable Row)",
+    category: 'BACK',
+    muscle: "Rhomboids & Mid-Trapezius (Mid Back)",
+    secondaryMuscles: ["Latissimus Dorsi", "Biceps"],
+    equipment: 'CABLE',
+    isGym: true,
+    isHome: false,
+    imageUrl: 'https://apilyfta.com/static/GymvisualPNG/05961101-Lever-Seated-Fly_Chest_small.png',
+    videoUrl: 'https://apilyfta.com/static/GymvisualMP4/05961201-Lever-Seated-Fly_Chest-FIX_.mp4',
+    instructions: [
+      "นั่งบนเบาะ วางเท้าบนแท่น ปรับหลังให้ตรง จับด้ามจับเคเบิลด้วยมือทั้งสองข้าง",
+      "ดึงด้ามจับเคเบิลเข้าหาบริเวณหน้าท้องล่าง บีบสะบักเข้าหากันที่จุดเกร็งสุด",
+      "ค่อยๆ ผ่อนแขนยืดกลับไปด้านหน้าอย่างมีควบคุม โดยไม่โน้มตัวตามมากเกินไป"
+    ],
+    tips: "อกผาย หลังไม่แอ่นหรือโก้งงอขณะดึง",
+    icon: '🚣‍♂️'
+  },
+  {
+    id: 'bench-press',
+    name: "Barbell Flat Bench Press",
+    nameTh: "นอนราบบนม้านั่งดันบาร์เบลอกกลาง (Barbell Flat Bench Press)",
+    category: 'CHEST',
+    muscle: "Middle Sternal Pectorals (Mid Chest)",
+    secondaryMuscles: ["Anterior Deltoids", "Triceps Brachii"],
+    equipment: 'BARBELL',
+    isGym: true,
+    isHome: false,
+    imageUrl: 'https://apilyfta.com/static/GymvisualPNG/00251101-Barbell-Bench-Press_Chest-FIX2_small.png',
+    videoUrl: 'https://apilyfta.com/static/GymvisualMP4/00251201-Barbell-Bench-Press_Chest-FIX2_.mp4',
+    instructions: [
+      "นอนราบบนม้านั่ง จับบาร์เบลกว้างกว่าช่วงไหล่เล็กน้อย ปลดล็อกบาร์เบลออกจากแร็ค",
+      "หย่อนบาร์เบลลงมาสัมผัสกึ่งกลางหน้าอกเบาๆ อย่างมีควบคุม",
+      "ออกแรงดันบาร์เบลขึ้นตรงเหนือหน้าอก หายใจออกขณะดันขึ้น"
+    ],
+    tips: "หนีบสะบักเข้าหากัน วางเท้าแนบชิดพื้นเพื่อเพิ่มความมั่นคงตลอดการดัน",
+    icon: '🏋️‍♂️'
+  },
+  {
+    id: 'dumbbell-incline-press',
+    name: "Incline Dumbbell Press",
+    nameTh: "ดันดัมเบลม้านั่งปรับเอียงอกบน (Incline DB Press)",
+    category: 'CHEST',
+    muscle: "Clavicular Head (Upper Chest)",
+    secondaryMuscles: ["Anterior Deltoids", "Triceps"],
+    equipment: 'DUMBBELL',
+    isGym: true,
+    isHome: true,
+    imageUrl: 'https://apilyfta.com/static/GymvisualPNG/03141101-Dumbbell-Incline-Bench-Press_Chest-FIX_small.png',
+    videoUrl: 'https://apilyfta.com/static/GymvisualMP4/03141201-Dumbbell-Incline-Bench-Press_Chest-FIX2_.mp4',
+    instructions: [
+      "นอนบนม้านั่งปรับเอียง 30-45 องศา ถือดัมเบลระดับข้างอก",
+      "ดันดัมเบลขึ้นตรงเหนืออกส่วนบนจนแขนเกือบตึง",
+      "ค่อยๆ คุมระยะผ่อนดัมเบลลงมาข้างอก"
+    ],
+    tips: "รักษาองศาม้านั่งไม่ให้ชันเกินไปเพื่อโฟกัสอกส่วนบน",
+    icon: '🏋️‍♂️'
+  },
+  {
+    id: 'cable-high-pulldown',
+    name: "Cable High Lat Pulldown",
+    nameTh: "ดึงสายเคเบิลอกบน (Cable High Pulldown)",
+    category: 'BACK',
+    muscle: "Latissimus Dorsi (Lats)",
+    secondaryMuscles: ["Biceps", "Rear Delts"],
+    equipment: 'CABLE',
+    isGym: true,
+    isHome: false,
+    imageUrl: 'https://apilyfta.com/static/GymvisualPNG/01691101-Cable-Incline-Bench-Press_Chest_small.png',
+    videoUrl: 'https://apilyfta.com/static/GymvisualMP4/01691201-Cable-Incline-Bench-Press_Chest_.mp4',
+    instructions: [
+      "นั่งเข้าเครื่องดึงปีก ปรับบาร์จับกว้างกว่าไหล่",
+      "ดึงบาร์ลงมาสัมผัสระดับอกบน แอ่นอกขึ้นเล็กน้อย",
+      "ค่อยๆ ผ่อนบาร์ขึ้นช้าๆ จนรู้สึกยืดปีกหลัง"
+    ],
+    tips: "ใช้ศอกกดลงด้านข้าง ไม่ใช้แรงจากข้อมือกระชาก",
+    icon: '🏋️‍♂️'
+  },
+  {
+    id: 'chest-supported-rear-fly',
+    name: "Chest-Supported Rear Delt Fly",
+    nameTh: "นอนคว่ำม้านั่งกางแขนดันไหล่หลัง (Chest-Supported Rear Fly)",
+    category: 'SHOULDERS',
+    muscle: "Posterior Deltoids (Rear Delts)",
+    secondaryMuscles: ["Rhomboids", "Trapezius"],
+    equipment: 'DUMBBELL',
+    isGym: true,
+    isHome: true,
+    imageUrl: 'https://apilyfta.com/static/GymvisualPNG/03281101-Dumbbell-Incline-Shoulder-Raise_chest_small.png',
+    videoUrl: 'https://apilyfta.com/static/GymvisualMP4/03281201-Dumbbell-Incline-Shoulder-Raise_chest.mp4',
+    instructions: [
+      "นอนคว่ำหน้าบนม้านั่งปรับเอียง ถือดัมเบลปล่อยแขนลงด้านล่าง",
+      "กางแขนออกด้านข้างขึ้นระดับไหล่ เกร็งไหล่หลัง",
+      "ค่อยๆ ผ่อนดัมเบลลงสู่จุดเริ่มต้น"
+    ],
+    tips: "เน้นใช้แรงจากไหล่หลัง ไม่ใช่หลังบนสะบัก",
+    icon: '🏋️‍♂️'
+  },
+  {
+    id: 'push-ups',
+    name: "Push-Up",
+    nameTh: "ดันพื้นบอดี้เวท (Push-Up)",
+    category: 'CHEST',
+    muscle: "Chest & Core Stability",
+    secondaryMuscles: ["Triceps", "Anterior Deltoids"],
+    equipment: 'BODYWEIGHT',
+    isGym: true,
+    isHome: true,
+    imageUrl: 'https://apilyfta.com/static/GymvisualPNG/06621101-Push-up-m_Chest-FIX_small.png',
+    videoUrl: 'https://apilyfta.com/static/GymvisualMP4/06621201-Push-up-m_Chest.mp4',
+    instructions: [
+      "ตั้งท่าแพลงก์ มือวางกว้างกว่าไหล่เล็กน้อย",
+      "หย่อนลำตัวลงจนอกเกือบสัมผัสพื้น",
+      "ดันลำตัวขึ้นตรง เกร็งหน้าท้องตลอดเวลา"
+    ],
+    tips: "รักษาลำตัวให้ตรงเป็นแนวเดียว ไม่ปล่อยสะโพกตก",
+    icon: '🤸‍♂️'
+  },
+  {
+    id: 'crunches',
+    name: "Abdominal Crunch",
+    nameTh: "งอลำตัวงอหน้าท้อง (Abdominal Crunch)",
+    category: 'ABS',
+    muscle: "Rectus Abdominis (Upper Abs)",
+    secondaryMuscles: ["Obliques"],
+    equipment: 'BODYWEIGHT',
+    isGym: true,
+    isHome: true,
+    imageUrl: 'https://apilyfta.com/static/GymvisualPNG/02791101-Decline-Push-Up-m_chest_small.png',
+    videoUrl: 'https://apilyfta.com/static/GymvisualMP4/02791201-Decline-Push-Up_Chest-FIX_.mp4',
+    instructions: [
+      "นอนราบงอเข่า วางมือข้างศรีษะ",
+      "ม้วนลำตัวส่วนบนขึ้นเกร็งหน้าท้อง",
+      "ผ่อนลำตัวลงช้าๆ"
+    ],
+    tips: "อย่าใช้มือดึงคอ ให้ใช้แรงเกร็งจากหน้าท้องเท่านั้น",
+    icon: '🧘‍♂️'
+  },
+  {
+    id: 'leg-raises',
+    name: "Lying Leg Raise",
+    nameTh: "นอนยกขากระชับท้องล่าง (Lying Leg Raise)",
+    category: 'ABS',
+    muscle: "Lower Abs & Hip Flexors",
+    secondaryMuscles: ["Rectus Abdominis"],
+    equipment: 'BODYWEIGHT',
+    isGym: true,
+    isHome: true,
+    imageUrl: 'https://apilyfta.com/static/GymvisualPNG/02791101-Decline-Push-Up-m_chest_small.png',
+    videoUrl: 'https://apilyfta.com/static/GymvisualMP4/02791201-Decline-Push-Up_Chest-FIX_.mp4',
+    instructions: [
+      "นอนราบกับพื้น วางมือข้างลำตัว",
+      "ยกขาตั้งตรงขึ้นทำมุม 90 องศา",
+      "ค่อยๆ ลดขาลงช้าๆ โดยไม่ให้ส้นเท้าแตะพื้น"
+    ],
+    tips: "กดหลังล่างให้แนบติดพื้นตลอดเวลาเพื่อความปลอดภัย",
+    icon: '🧘‍♂️'
+  },
+  {
+    id: 'dumbbell-row',
+    name: "One-Arm Dumbbell Row",
+    nameTh: "พายดัมเบลแขนเดียว (One-Arm DB Row)",
+    category: 'BACK',
+    muscle: "Latissimus Dorsi & Rhomboids",
+    secondaryMuscles: ["Biceps", "Rear Delts"],
+    equipment: 'DUMBBELL',
+    isGym: true,
+    isHome: true,
+    imageUrl: 'https://apilyfta.com/static/GymvisualPNG/02891101-Dumbbell-Bench-Press_Chest-FIX_small.png',
+    videoUrl: 'https://apilyfta.com/static/GymvisualMP4/02891201-Dumbbell-Bench-Press_Chest-FIX_.mp4',
+    instructions: [
+      "วางเข่าและมือข้างหนึ่งบนม้านั่ง มืออีกข้างถือดัมเบล",
+      "ดึงดัมเบลขึ้นข้างลำตัว บีบสะบักเข้าหาแนวกลาง",
+      "ค่อยๆ ผ่อนดัมเบลลงช้าๆ"
+    ],
+    tips: "ดึงศอกนำขึ้นด้านหลัง ไม่บิดเอวรุนแรง",
+    icon: '🏋️‍♂️'
+  },
+  {
+    id: 'overhead-press',
+    name: "Overhead Shoulder Press",
+    nameTh: "ดันบาร์เบลเหนือศีรษะ (Overhead Press)",
+    category: 'SHOULDERS',
+    muscle: "Anterior & Lateral Deltoids",
+    secondaryMuscles: ["Triceps", "Upper Chest"],
+    equipment: 'BARBELL',
+    isGym: true,
+    isHome: false,
+    imageUrl: 'https://apilyfta.com/static/GymvisualPNG/00471101-Barbell-Incline-Bench-Press_Chest_small.png',
+    videoUrl: 'https://apilyfta.com/static/GymvisualMP4/00471201-Barbell-Incline-Bench-Press_Chest-FIX2_.mp4',
+    instructions: [
+      "ยืนตรงจับบาร์เบลระดับอก upper chest",
+      "ดันบาร์เบลขึ้นเหนือศรีษะจนแขนตึง",
+      "ลดบาร์เบลลงมาสัมผัสอกช้าๆ"
+    ],
+    tips: "เกร็งก้นและหน้าท้องนิ่ง ไม่แอ่นหลังล่าง",
+    icon: '🏋️‍♂️'
+  },
+  {
+    id: 'chair-dips',
+    name: "Bench Dips",
+    nameTh: "ดันหลังแขนม้านั่ง (Bench Dips)",
+    category: 'TRICEPS',
+    muscle: "Triceps Brachii",
+    secondaryMuscles: ["Anterior Deltoids", "Chest"],
+    equipment: 'BODYWEIGHT',
+    isGym: true,
+    isHome: true,
+    imageUrl: 'https://apilyfta.com/static/GymvisualPNG/02511101-Chest-Dip_Chest_small.png',
+    videoUrl: 'https://apilyfta.com/static/GymvisualMP4/02511201-Chest-Dip_Chest.mp4',
+    instructions: [
+      "วางมือบนขอบม้านั่ง/เก้าอี้ ยื่นขาไปด้านหน้า",
+      "หย่อนสะโพกลงช้าๆ จนศอกงอ 90 องศา",
+      "ดันลำตัวขึ้นตรงเกร็งหลังแขน"
+    ],
+    tips: "รักษาลำตัวให้อยู่ใกล้ขอบม้านั่งตลอดเวลา",
+    icon: '🏋️‍♂️'
+  },
+  {
+    id: 'barbell-squat',
+    name: "Barbell Back Squat",
+    nameTh: "แบกบาร์เบลสควอท (Barbell Back Squat)",
+    category: 'LEGS',
+    muscle: "Quadriceps & Glutes",
+    secondaryMuscles: ["Hamstrings", "Core"],
+    equipment: 'BARBELL',
+    isGym: true,
+    isHome: false,
+    imageUrl: 'https://apilyfta.com/static/GymvisualPNG/00251101-Barbell-Bench-Press_Chest-FIX2_small.png',
+    videoUrl: 'https://apilyfta.com/static/GymvisualMP4/00251201-Barbell-Bench-Press_Chest-FIX2_.mp4',
+    instructions: [
+      "แบกบาร์เบลบนไหล่ส่วนหลัง ยืนเท้าวางกว้างระดับไหล่",
+      "หย่อนสะโพกลงลึกขนานพื้น ย่อเข่าตามองตรง",
+      "ถีบเท้าดันลำตัวกลับขึ้นสู่ท่าเริ่มต้น"
+    ],
+    tips: "กดส้นเท้าแน่นและไม่ปล่อยเข่าหุบเข้าด้านใน",
+    icon: '🏋️‍♂️'
+  },
+  {
+    id: 'romanian-deadlift',
+    name: "Romanian Deadlift (RDL)",
+    nameTh: "โรมาเนียนเดดลิฟต์ยืดต้นขาหลัง (Romanian Deadlift)",
+    category: 'LEGS',
+    muscle: "Hamstrings & Glutes",
+    secondaryMuscles: ["Erector Spinae", "Lats"],
+    equipment: 'BARBELL',
+    isGym: true,
+    isHome: false,
+    imageUrl: 'https://apilyfta.com/static/GymvisualPNG/00251101-Barbell-Bench-Press_Chest-FIX2_small.png',
+    videoUrl: 'https://apilyfta.com/static/GymvisualMP4/00251201-Barbell-Bench-Press_Chest-FIX2_.mp4',
+    instructions: [
+      "ถือบาร์เบลแขนเหยียด ยืนตรงงอเข่าเล็กน้อย",
+      "ดันสะโพกไปด้านหลัง โน้มตัวลงจนรู้สึกยืดต้นขาหลัง",
+      "ดันสะโพกกลับมาด้านหน้าเกร็งก้นยืนตรง"
+    ],
+    tips: "รักษาหลังตรงตลอดการเคลื่อนไหว ไม่โค้งงอหลังล่าง",
+    icon: '🏋️‍♂️'
+  },
+  {
+    id: 'goblet-squat',
+    name: "Dumbbell Goblet Squat",
+    nameTh: "ถือดัมเบลอกสควอท (Goblet Squat)",
+    category: 'LEGS',
+    muscle: "Quadriceps & Core",
+    secondaryMuscles: ["Glutes"],
+    equipment: 'DUMBBELL',
+    isGym: true,
+    isHome: true,
+    imageUrl: 'https://apilyfta.com/static/GymvisualPNG/02891101-Dumbbell-Bench-Press_Chest-FIX_small.png',
+    videoUrl: 'https://apilyfta.com/static/GymvisualMP4/02891201-Dumbbell-Bench-Press_Chest-FIX_.mp4',
+    instructions: [
+      "ถือดัมเบลแนบชิดหน้าอกด้วยมือสองข้าง",
+      "ย่อสะโพกลงลึก ขนานพื้น",
+      "ดันตัวกลับขึ้นตรงเกร็งหน้าขา"
+    ],
+    tips: "รักษาอกผายและหลังตรงตลอดเวลา",
+    icon: '🏋️‍♂️'
+  },
+  {
+    id: 'walking-lunges',
+    name: "Dumbbell Walking Lunge",
+    nameTh: "ก้าวเดินก้าวสควอท (Walking Lunges)",
+    category: 'LEGS',
+    muscle: "Quadriceps & Glutes",
+    secondaryMuscles: ["Hamstrings", "Calves"],
+    equipment: 'DUMBBELL',
+    isGym: true,
+    isHome: true,
+    imageUrl: 'https://apilyfta.com/static/GymvisualPNG/02891101-Dumbbell-Bench-Press_Chest-FIX_small.png',
+    videoUrl: 'https://apilyfta.com/static/GymvisualMP4/02891201-Dumbbell-Bench-Press_Chest-FIX_.mp4',
+    instructions: [
+      "ถือดัมเบลข้างลำตัว ก้าวขาไปด้านหน้าหนึ่งก้าว",
+      "ย่อตัวลงจนเข่าหลังเกือบสัมผัสพื้น",
+      "ดันตัวขึ้นและก้าวขาอีกข้างไปด้านหน้าต่อเนื่อง"
+    ],
+    tips: "เข่าหน้าไม่เลยปลายเท้ามากเกินไป",
+    icon: '🏃‍♂️'
+  },
+  {
+    id: 'burpees',
+    name: "Full Body Burpees",
+    nameTh: "เบอร์พีระเบิดคาร์ดิโอ (Burpees)",
+    category: 'CARDIO',
+    muscle: "Full Body Cardiovascular Explosive",
+    secondaryMuscles: ["Chest", "Legs", "Core"],
+    equipment: 'BODYWEIGHT',
+    isGym: true,
+    isHome: true,
+    imageUrl: 'https://apilyfta.com/static/GymvisualPNG/06621101-Push-up-m_Chest-FIX_small.png',
+    videoUrl: 'https://apilyfta.com/static/GymvisualMP4/06621201-Push-up-m_Chest.mp4',
+    instructions: [
+      "ยืนตรง ทอดตัวย่อสควอท วางมือบนพื้น",
+      "กระโดดถอยขาเป็นท่าดันพื้น แล้วดันพื้น 1 ครั้ง",
+      "กระโดดดึงขากลับมาแล้วกระโดดชูมือขึ้นฟ้า"
+    ],
+    tips: "ออกแรงเคลื่อนไหวอย่างต่อเนื่องเพื่อกระตุ้นหัวใจ",
+    icon: '🔥'
+  },
+  {
+    id: 'jumping-jacks',
+    name: "Jumping Jacks",
+    nameTh: "กระโดดตบอุ่นเครื่องคาร์ดิโอ (Jumping Jacks)",
+    category: 'CARDIO',
+    muscle: "Cardio & Full Body Warm-up",
+    secondaryMuscles: ["Calves", "Shoulders"],
+    equipment: 'BODYWEIGHT',
+    isGym: true,
+    isHome: true,
+    imageUrl: 'https://apilyfta.com/static/GymvisualPNG/06621101-Push-up-m_Chest-FIX_small.png',
+    videoUrl: 'https://apilyfta.com/static/GymvisualMP4/06621201-Push-up-m_Chest.mp4',
+    instructions: [
+      "ยืนตรง แขนข้างลำตัว",
+      "กระโดดกางขาออกพร้อมตบมือเหนือศีรษะ",
+      "กระโดดหุบขากลับสู่ท่าเริ่มต้น"
+    ],
+    tips: "รักษาจังหวะและลงน้ำหนักเบาๆ ที่ปลายเท้า",
+    icon: '⚡'
+  },
+  {
+    id: 'bent-over-row',
+    name: "Barbell Bent-Over Row",
+    nameTh: "ก้มตัวพายบาร์เบลหลังกลาง (Bent-Over Barbell Row)",
+    category: 'BACK',
+    muscle: "Latissimus Dorsi & Rhomboids",
+    secondaryMuscles: ["Biceps", "Erector Spinae"],
+    equipment: 'BARBELL',
+    isGym: true,
+    isHome: false,
+    imageUrl: 'https://apilyfta.com/static/GymvisualPNG/00251101-Barbell-Bench-Press_Chest-FIX2_small.png',
+    videoUrl: 'https://apilyfta.com/static/GymvisualMP4/00251201-Barbell-Bench-Press_Chest-FIX2_.mp4',
+    instructions: [
+      "ก้มตัวทำมุม 45 องศา งอเข่าเล็กน้อย ถือบาร์เบลแขนตึง",
+      "ดึงบาร์เบลเข้าหาหน้าท้องล่าง บีบสะบักเข้าหากัน",
+      "ค่อยๆ ผ่อนบาร์เบลลงช้าๆ"
+    ],
+    tips: "เกร็งหน้าท้องและรักษาหลังตรง ไม่โค้งงอ",
+    icon: '🏋️‍♂️'
   }
 ];
 
