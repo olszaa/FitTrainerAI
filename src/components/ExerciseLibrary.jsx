@@ -126,7 +126,7 @@ export default function ExerciseLibrary() {
   // Combine standard database and custom exercises safely
   const combinedExercises = (customExercises || [])
     .concat(EXERCISE_DATABASE || [])
-    .filter((ex) => ex && typeof ex === 'object' && (ex.id || ex.name || ex.nameTh));
+    .filter((ex) => ex && typeof ex === 'object' && ex.id);
 
   // Base search filtered exercises (matching current search query)
   const baseSearchExercises = useMemo(() => {

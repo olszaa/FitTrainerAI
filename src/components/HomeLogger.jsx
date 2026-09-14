@@ -87,7 +87,7 @@ export default function HomeLogger({ onFinishSession, templateToOpen = null, onC
   }, [activeSession, isPaused]);
 
   const handleStartHomeSession = (routine) => {
-    const fullExercises = routine.exercises.map((item) => {
+    const fullExercises = (routine?.exercises || []).filter((item) => item && typeof item === 'object').map((item) => {
       const dbEx = EXERCISE_DATABASE.find((e) => e.id === item.exerciseId) || {};
       return {
         ...item,
@@ -190,7 +190,7 @@ export default function HomeLogger({ onFinishSession, templateToOpen = null, onC
           </h3>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {[...(customPlans || []).filter((t) => t.category === 'HOME'), ...WORKOUT_TEMPLATES.filter((t) => t.category === 'HOME')].map((tmpl) => (
+            {[...(customPlans || []).filter((t) => t && t.category === 'HOME'), ...WORKOUT_TEMPLATES.filter((t) => t && t.category === 'HOME')].filter((tmpl) => tmpl && typeof tmpl === 'object' && tmpl.id).map((tmpl) => (
               <div
                 key={tmpl.id}
                 className={`glass-panel rounded-3xl p-5 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 group ${

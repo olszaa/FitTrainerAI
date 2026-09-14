@@ -558,8 +558,10 @@ export const deleteCustomExercise = (exerciseId, userId = getActiveUserId()) => 
 };
 
 export const getAllExercises = (userId = getActiveUserId()) => {
-  const customExercises = getCustomExercises(userId);
-  return [...customExercises, ...EXERCISE_DATABASE];
+  const customExercises = getCustomExercises(userId) || [];
+  return [...customExercises, ...EXERCISE_DATABASE].filter(
+    (ex) => ex && typeof ex === 'object' && ex.id
+  );
 };
 
 // --- User PIN Verification ---

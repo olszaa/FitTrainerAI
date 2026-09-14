@@ -317,7 +317,7 @@ export const fetchCustomPlansFromSupabase = async (userId) => {
     const { data, error } = await client.from('custom_plans').select('*').eq('user_id', userId);
     if (error || !data) return [];
 
-    return data.map((item) => ({
+    return data.filter((item) => item && typeof item === 'object' && item.id).map((item) => ({
       id: item.id,
       name: item.name,
       nameTh: item.name_th,
@@ -372,7 +372,7 @@ export const fetchCustomExercisesFromSupabase = async (userId) => {
     const { data, error } = await client.from('custom_exercises').select('*').eq('user_id', userId);
     if (error || !data) return [];
 
-    return data.map((item) => ({
+    return data.filter((item) => item && typeof item === 'object' && item.id).map((item) => ({
       id: item.id,
       name: item.name,
       nameTh: item.name_th,

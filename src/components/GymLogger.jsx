@@ -327,7 +327,7 @@ export default function GymLogger({
       estimatedMinutes: template.estimatedMinutes || 50,
       targetMuscles: template.targetMuscles || [],
       splitTag: template.splitTag || '',
-      exercises: (template.exercises || []).map((templateEx, idx) => {
+      exercises: (template.exercises || []).filter((templateEx) => templateEx && typeof templateEx === 'object').map((templateEx, idx) => {
         const fullInfo = EXERCISE_DATABASE.find(
           (e) => e.id === templateEx.exerciseId || e.id === templateEx.exerciseId?.replace('-cardio', '')
         ) || {};
@@ -403,7 +403,7 @@ export default function GymLogger({
       estimatedMinutes: setupSession.estimatedMinutes || 45,
       targetMuscles: setupSession.targetMuscles || [],
       splitTag: setupSession.splitTag || '',
-      exercises: setupSession.exercises.map((ex) => ({
+      exercises: (setupSession.exercises || []).filter((ex) => ex && typeof ex === 'object').map((ex) => ({
         exerciseId: ex.exerciseId || ex.id,
         targetSets: ex.sets?.length || 3,
         targetReps: typeof ex.sets?.[0]?.reps === 'number' ? `${ex.sets[0].reps}` : (ex.sets?.[0]?.reps || '10-12'),
@@ -525,7 +525,7 @@ export default function GymLogger({
       routineName: setupSession.routineName,
       mode: 'GYM',
       startTime: new Date().toISOString(),
-      exercises: setupSession.exercises.map((ex) => {
+      exercises: (setupSession.exercises || []).filter((ex) => ex && typeof ex === 'object').map((ex) => {
         const isCardio = ex.isCardio || isCardioExercise(ex);
         const cardioWorkSec = Number(ex.cardioWorkSec) || 30;
         const cardioRestSec = Number(ex.cardioRestSec) || 15;
@@ -1024,7 +1024,7 @@ export default function GymLogger({
               <span className="text-[11px] text-slate-400 hidden sm:inline">กดเริ่มฝึกได้ทันที</span>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {allCustomPlans.map((tmpl) => (
+              {allCustomPlans.filter((tmpl) => tmpl && typeof tmpl === 'object' && tmpl.id).map((tmpl) => (
                 <div
                   key={`custom-highlight-${tmpl.id}`}
                   onClick={() => handleOpenSetup(tmpl)}
@@ -1146,7 +1146,7 @@ export default function GymLogger({
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {filteredTemplates.map((tmpl) => {
+            {filteredTemplates.filter((tmpl) => tmpl && typeof tmpl === 'object' && tmpl.id).map((tmpl) => {
               const isHome = tmpl.category === 'HOME';
               const isCustom = tmpl.id?.startsWith('custom-') || tmpl.isCustom;
 
@@ -1773,7 +1773,7 @@ export default function GymLogger({
             <div className="w-full max-w-lg bg-[#131722] border border-slate-800 rounded-3xl p-6">
               <h3 className="text-base font-extrabold text-white mb-4">เลือกท่าฝึกเพิ่มในโปรแกรม</h3>
               <div className="max-h-72 overflow-y-auto space-y-2 pr-1 mb-4">
-                {EXERCISE_DATABASE.map((ex) => (
+                {EXERCISE_DATABASE.filter((ex) => ex && typeof ex === 'object' && ex.id).map((ex) => (
                   <div
                     key={ex.id}
                     onClick={() => {
@@ -2455,7 +2455,7 @@ export default function GymLogger({
 
       {/* Exercises Log Card List */}
       <div className="space-y-4 sm:space-y-6">
-        {workoutSession.exercises.map((ex, exIdx) => {
+        {(workoutSession.exercises || []).filter((ex) => ex && typeof ex === 'object').map((ex, exIdx) => {
           const prevPerf = getPreviousPerformance(ex.exerciseId);
 
           return (
@@ -2684,7 +2684,7 @@ export default function GymLogger({
           <div className="w-full max-w-lg bg-[#131722] border border-slate-800 rounded-3xl p-6">
             <h3 className="text-base font-extrabold text-white mb-4">เพิ่มท่าฝึกในเซสชันนี้</h3>
             <div className="max-h-72 overflow-y-auto space-y-2 pr-1 mb-4">
-              {getAllExercises().map((ex) => (
+              {getAllExercises().filter((ex) => ex && typeof ex === 'object' && ex.id).map((ex) => (
                 <div
                   key={ex.id}
                   onClick={() => handleAddExerciseToWorkout(ex.id)}

@@ -38863,7 +38863,9 @@ export const EXERCISE_IMAGE_MAP = {
   'crunches': '/exercises/cable_crunch.jpg',
 };
 
-export const EXERCISE_DATABASE = RAW_EXERCISE_DATABASE.map((ex) => ({
-  ...ex,
-  imageUrl: ex.imageUrl || EXERCISE_IMAGE_MAP[ex.id] || `/exercises/${ex.id.replace(/-/g, '_')}.jpg`
-}));
+export const EXERCISE_DATABASE = RAW_EXERCISE_DATABASE
+  .filter((ex) => ex && typeof ex === 'object' && ex.id)
+  .map((ex) => ({
+    ...ex,
+    imageUrl: ex.imageUrl || EXERCISE_IMAGE_MAP[ex.id] || `/exercises/${(ex.id || '').replace(/-/g, '_')}.jpg`
+  }));

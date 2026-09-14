@@ -76,7 +76,7 @@ export default function PlanBuilder({ onStartWorkoutPlan }) {
     }
 
     // Ensure exercises have valid properties
-    cloned.exercises = (cloned.exercises || []).map((ex) => {
+    cloned.exercises = (cloned.exercises || []).filter((ex) => ex && typeof ex === 'object').map((ex) => {
       const full = EXERCISE_DATABASE.find(
         (e) => e.id === ex.exerciseId || e.id === ex.exerciseId?.replace('-cardio', '')
       );
@@ -321,7 +321,7 @@ export default function PlanBuilder({ onStartWorkoutPlan }) {
 
       {/* Routine Templates Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        {filteredTemplates.map((tmpl) => {
+        {filteredTemplates.filter((tmpl) => tmpl && typeof tmpl === 'object' && tmpl.id).map((tmpl) => {
           const isCustom = tmpl.id?.startsWith('custom-') || tmpl.isCustom;
           const isHome = tmpl.category === 'HOME';
 
@@ -555,7 +555,7 @@ export default function PlanBuilder({ onStartWorkoutPlan }) {
                   </div>
                 ) : (
                   <div className="space-y-2.5">
-                    {editingPlan.exercises.map((ex, idx) => {
+                    {(editingPlan.exercises || []).filter((ex) => ex && typeof ex === 'object').map((ex, idx) => {
                       const fullInfo = getAllExercises().find(
                         (e) => e.id === ex.exerciseId || e.id === ex.exerciseId?.replace('-cardio', '')
                       ) || {};
@@ -830,7 +830,7 @@ export default function PlanBuilder({ onStartWorkoutPlan }) {
 
             {/* Exercise List */}
             <div className="flex-1 overflow-y-auto space-y-1.5 pr-1 max-h-72">
-              {getAllExercises().filter((ex) => {
+              {getAllExercises().filter((ex) => ex && typeof ex === 'object' && ex.id).filter((ex) => {
                 if (exerciseCategoryFilter !== 'ALL' && ex.category !== exerciseCategoryFilter) return false;
                 if (exerciseSearch.trim()) {
                   const q = exerciseSearch.toLowerCase();
