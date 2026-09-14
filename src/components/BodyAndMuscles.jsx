@@ -38,6 +38,7 @@ import {
   calculateTDEE
 } from '../utils/fitnessCalculators';
 import MuscleHeatmap from './MuscleHeatmap';
+import { checkDuplicateUser } from '../utils/storage';
 
 const AVATAR_OPTIONS = ['🏋️‍♂️', '🏃‍♀️', '🥊', '⚡', '🧘', '🦾', '🥇', '🎯', '🔥', '🚴'];
 
@@ -241,16 +242,32 @@ export default function BodyAndMuscles({
     setTimeout(() => setSuccessMsg(''), 3000);
   };
 
-  const handleCreateNewUser = (e) => {
+  const handleCreateNewUser = async (e) => {
     e.preventDefault();
-    if (!newUserForm.name.trim()) {
+    if (!newUserForm.name.trim() && !newUserForm.username?.trim()) {
       alert('กรุณากรอกชื่อผู้ใช้');
       return;
     }
-    onCreateUser(newUserForm);
+
+    const payload = {
+      ...newUserForm,
+      name: newUserForm.name.trim() || newUserForm.username?.trim(),
+      username: newUserForm.username?.trim() || newUserForm.name.trim(),
+      email: newUserForm.email?.trim() || ''
+    };
+
+    const dupCheck = await checkDuplicateUser(payload);
+    if (dupCheck.isDuplicate) {
+      alert(`⚠️ ${dupCheck.message}`);
+      return;
+    }
+
+    onCreateUser(payload);
     setIsCreatingUser(false);
     setNewUserForm({
       name: '',
+      username: '',
+      email: '',
       avatar: '🏋️‍♂️',
       gender: 'MALE',
       age: 26,

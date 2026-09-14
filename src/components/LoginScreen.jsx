@@ -18,6 +18,7 @@ import {
   getUserProfile,
   verifyUserPin,
   createNewUser,
+  checkDuplicateUser,
   syncCloudProfilesToLocal,
   syncUserDataFromCloudToLocal,
   searchProfileFromSupabase
@@ -214,9 +215,13 @@ export default function LoginScreen({
     setPinError('');
   };
 
+  const [registerError, setRegisterError] = useState('');
+  const [duplicateField, setDuplicateField] = useState(null);
+
   const handleRegisterSubmit = async (e) => {
     e.preventDefault();
-    if (!registerForm.username.trim() && !registerForm.name.trim()) return;
+    setRegisterError('');
+    setDuplicateField(null);
 
     const payload = {
       ...registerForm,
@@ -227,9 +232,26 @@ export default function LoginScreen({
       email: registerForm.email.trim()
     };
 
+    if (!payload.username && !payload.name) {
+      setRegisterError('กรุณากรอก Username หรือ ชื่อผู้ใช้งานให้เรียบร้อย');
+      return;
+    }
+
     setIsCloudSyncing(true);
+    setSyncStatusMsg('🔍 กำลังตรวจสอบข้อมูลซ้ำในระบบ...');
+
+    // Validate duplicate Username, Email, or Name
+    const dupCheck = await checkDuplicateUser(payload);
+    if (dupCheck.isDuplicate) {
+      setIsCloudSyncing(false);
+      setSyncStatusMsg('');
+      setRegisterError(dupCheck.message);
+      setDuplicateField(dupCheck.field);
+      return;
+    }
+
     setSyncStatusMsg('✨ กำลังสร้างบัญชีและซิงค์ข้อมูลไปยัง Cloud...');
-    const { newUser } = createNewUser(payload);
+    const { newUser } = await createNewUser(payload);
     if (onCreateUser) onCreateUser(payload);
     await syncUserDataFromCloudToLocal(newUser.id);
     setIsCloudSyncing(false);
@@ -477,6 +499,13 @@ export default function LoginScreen({
             </div>
 
             <form onSubmit={handleRegisterSubmit} className="space-y-4 text-xs">
+              {registerError && (
+                <div className="bg-rose-500/15 border border-rose-500/40 text-rose-300 text-xs p-3.5 rounded-xl flex items-center space-x-2.5 animate-shake shadow-lg shadow-rose-950/40">
+                  <span className="text-lg shrink-0">⚠️</span>
+                  <span className="font-bold">{registerError}</span>
+                </div>
+              )}
+
               {/* Avatar Selection */}
               <div>
                 <label className="block text-slate-300 font-bold mb-1.5">เลือกไอคอนประจำตัว (Avatar)</label>
@@ -526,7 +555,11 @@ export default function LoginScreen({
                             name: registerForm.name || val
                           });
                         }}
-                        className="w-full bg-slate-950 border border-slate-700 text-white rounded-xl pl-9 pr-3 py-2.5 outline-none focus:border-cyan-400 font-bold"
+                        className={`w-full bg-slate-950 border ${
+                          duplicateField === 'username'
+                            ? 'border-rose-500 text-rose-200 focus:border-rose-400 ring-2 ring-rose-500/20'
+                            : 'border-slate-700 text-white focus:border-cyan-400'
+                        } rounded-xl pl-9 pr-3 py-2.5 outline-none font-bold transition-all`}
                       />
                     </div>
                   </div>
@@ -569,7 +602,11 @@ export default function LoginScreen({
                         placeholder="เช่น คุณเอก (Ake)"
                         value={registerForm.name}
                         onChange={(e) => setRegisterForm({ ...registerForm, name: e.target.value })}
-                        className="w-full bg-slate-950 border border-slate-700 text-white rounded-xl pl-9 pr-3 py-2.5 outline-none focus:border-lime-400 font-bold"
+                        className={`w-full bg-slate-950 border ${
+                          duplicateField === 'name'
+                            ? 'border-rose-500 text-rose-200 focus:border-rose-400 ring-2 ring-rose-500/20'
+                            : 'border-slate-700 text-white focus:border-lime-400'
+                        } rounded-xl pl-9 pr-3 py-2.5 outline-none font-bold transition-all`}
                       />
                     </div>
                   </div>
@@ -586,7 +623,11 @@ export default function LoginScreen({
                         placeholder="เช่น user@example.com"
                         value={registerForm.email}
                         onChange={(e) => setRegisterForm({ ...registerForm, email: e.target.value })}
-                        className="w-full bg-slate-950 border border-slate-700 text-white rounded-xl pl-9 pr-3 py-2.5 outline-none focus:border-amber-400 font-bold"
+                        className={`w-full bg-slate-950 border ${
+                          duplicateField === 'email'
+                            ? 'border-rose-500 text-rose-200 focus:border-rose-400 ring-2 ring-rose-500/20'
+                            : 'border-slate-700 text-white focus:border-amber-400'
+                        } rounded-xl pl-9 pr-3 py-2.5 outline-none font-bold transition-all`}
                       />
                     </div>
                   </div>

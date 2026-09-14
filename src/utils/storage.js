@@ -123,6 +123,88 @@ export const setActiveUserId = (userId) => {
   return userId;
 };
 
+export const checkDuplicateUser = async (userData) => {
+  if (!userData) return { isDuplicate: false };
+
+  const targetUsername = (userData.username || '').trim().toLowerCase();
+  const targetName = (userData.name || '').trim().toLowerCase();
+  const targetEmail = (userData.email || '').trim().toLowerCase();
+
+  const localUsers = getUsersList();
+
+  // 1. Check local runtime memory users
+  for (const u of localUsers) {
+    const uUsername = (u.username || '').trim().toLowerCase();
+    const uName = (u.name || '').trim().toLowerCase();
+    const uEmail = (u.email || '').trim().toLowerCase();
+
+    if (targetUsername && (uUsername === targetUsername || uName === targetUsername)) {
+      return {
+        isDuplicate: true,
+        field: 'username',
+        message: `ชื่อผู้ใช้งาน (Username) "${userData.username}" มีอยู่ในระบบแล้ว กรุณาใช้ชื่ออื่น`
+      };
+    }
+
+    if (targetEmail && uEmail && uEmail === targetEmail) {
+      return {
+        isDuplicate: true,
+        field: 'email',
+        message: `อีเมล (Email) "${userData.email}" ถูกใช้งานในระบบแล้ว กรุณาใช้อีเมลอื่น`
+      };
+    }
+
+    if (targetName && uName === targetName && !targetUsername) {
+      return {
+        isDuplicate: true,
+        field: 'name',
+        message: `ชื่อสมาชิก "${userData.name}" มีอยู่ในระบบแล้ว`
+      };
+    }
+  }
+
+  // 2. Deep check in Supabase Cloud DB if configured
+  try {
+    if (targetUsername) {
+      const cloudMatches = await searchProfileFromSupabase(targetUsername);
+      if (cloudMatches && cloudMatches.length > 0) {
+        const match = cloudMatches.find(
+          (c) =>
+            (c.username || '').trim().toLowerCase() === targetUsername ||
+            (c.name || '').trim().toLowerCase() === targetUsername
+        );
+        if (match) {
+          return {
+            isDuplicate: true,
+            field: 'username',
+            message: `ชื่อผู้ใช้งาน (Username) "${userData.username}" มีอยู่ในระบบ Cloud แล้ว`
+          };
+        }
+      }
+    }
+
+    if (targetEmail) {
+      const cloudEmailMatches = await searchProfileFromSupabase(targetEmail);
+      if (cloudEmailMatches && cloudEmailMatches.length > 0) {
+        const match = cloudEmailMatches.find(
+          (c) => (c.email || '').trim().toLowerCase() === targetEmail
+        );
+        if (match) {
+          return {
+            isDuplicate: true,
+            field: 'email',
+            message: `อีเมล (Email) "${userData.email}" ถูกใช้งานแล้วในระบบ Cloud`
+          };
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('Duplicate check cloud warning:', e);
+  }
+
+  return { isDuplicate: false };
+};
+
 export const createNewUser = async (userData) => {
   const newId = `user-${Date.now()}`;
   const newUser = {

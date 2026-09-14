@@ -15,6 +15,7 @@ import {
   CheckCircle2,
   AlertTriangle
 } from 'lucide-react';
+import { checkDuplicateUser } from '../utils/storage';
 
 const AVATAR_OPTIONS = ['🏋️‍♂️', '🏃‍♀️', '🥊', '⚡', '🧘', '🦾', '🥇', '🎯', '🔥', '🚴'];
 const ADMIN_PASSWORD_REQUIRED = 'Code010906';
@@ -41,6 +42,7 @@ export default function AdminMemberModal({
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreatingUser, setIsCreatingUser] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
+  const [createError, setCreateError] = useState('');
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
 
   // New User Form State
@@ -77,11 +79,25 @@ export default function AdminMemberModal({
     setIsAdminAuthenticated(false);
   };
 
-  const handleCreateSubmit = (e) => {
+  const handleCreateSubmit = async (e) => {
     if (e) e.preventDefault();
-    if (!newUserForm.name.trim()) return;
+    setCreateError('');
+    if (!newUserForm.name.trim() && !newUserForm.username.trim()) return;
 
-    onCreateUser(newUserForm);
+    const payload = {
+      ...newUserForm,
+      name: newUserForm.name.trim() || newUserForm.username.trim(),
+      username: newUserForm.username.trim() || newUserForm.name.trim(),
+      email: newUserForm.email.trim()
+    };
+
+    const dupCheck = await checkDuplicateUser(payload);
+    if (dupCheck.isDuplicate) {
+      setCreateError(dupCheck.message);
+      return;
+    }
+
+    onCreateUser(payload);
     setIsCreatingUser(false);
     setNewUserForm({
       name: '',
@@ -98,7 +114,7 @@ export default function AdminMemberModal({
       targetDaysPerWeek: 4,
       pinCode: ''
     });
-    setSuccessMsg(`สร้างสมาชิกใหม่ "${newUserForm.name}" สำเร็จแล้ว! 🎉`);
+    setSuccessMsg(`สร้างสมาชิกใหม่ "${payload.name}" สำเร็จแล้ว! 🎉`);
     setTimeout(() => setSuccessMsg(''), 3000);
   };
 
@@ -299,6 +315,13 @@ export default function AdminMemberModal({
                     <X className="w-4 h-4" />
                   </button>
                 </div>
+
+                {createError && (
+                  <div className="bg-rose-500/15 border border-rose-500/40 text-rose-300 text-xs p-3 rounded-xl flex items-center space-x-2 animate-shake">
+                    <span className="text-base shrink-0">⚠️</span>
+                    <span className="font-bold">{createError}</span>
+                  </div>
+                )}
 
                 {/* Avatar Picker */}
                 <div>

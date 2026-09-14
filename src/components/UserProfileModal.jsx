@@ -52,7 +52,8 @@ import {
   importUserData,
   getWorkoutLogs,
   getCustomPlans,
-  getCustomExercises
+  getCustomExercises,
+  checkDuplicateUser
 } from '../utils/storage';
 import {
   getSupabaseConfig,
@@ -305,12 +306,26 @@ export default function UserProfileModal({
     }, 1200);
   };
 
-  const handleCreateNewUserSubmit = (e) => {
+  const handleCreateNewUserSubmit = async (e) => {
     if (e) e.preventDefault();
-    if (!newUserForm.name.trim()) return;
-    onCreateUser(newUserForm);
+    if (!newUserForm.name.trim() && !newUserForm.username.trim()) return;
+
+    const payload = {
+      ...newUserForm,
+      name: newUserForm.name.trim() || newUserForm.username.trim(),
+      username: newUserForm.username.trim() || newUserForm.name.trim(),
+      email: newUserForm.email?.trim() || ''
+    };
+
+    const dupCheck = await checkDuplicateUser(payload);
+    if (dupCheck.isDuplicate) {
+      alert(`⚠️ ${dupCheck.message}`);
+      return;
+    }
+
+    onCreateUser(payload);
     setIsCreatingUser(false);
-    setSuccessMsg(`สร้างบัญชีผู้ใช้ "${newUserForm.name}" สำเร็จและสลับใช้งานแล้ว!`);
+    setSuccessMsg(`สร้างบัญชีผู้ใช้ "${payload.name}" สำเร็จและสลับใช้งานแล้ว!`);
     setTimeout(() => setSuccessMsg(''), 3000);
   };
 
