@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
   BookOpen,
   Search,
@@ -97,6 +97,7 @@ const INITIAL_FORM_STATE = {
 export default function ExerciseLibrary() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('ALL'); // 'ALL' | 'CUSTOM' | EXERCISE_CATEGORIES key
+  const [selectedEquipment, setSelectedEquipment] = useState('ALL'); // 'ALL' | EQUIPMENT_TYPES key
   const [selectedExercise, setSelectedExercise] = useState(null);
 
   // Custom Exercises State
@@ -105,27 +106,88 @@ export default function ExerciseLibrary() {
   const [editingExerciseId, setEditingExerciseId] = useState(null);
   const [formData, setFormData] = useState(INITIAL_FORM_STATE);
 
-  // Video playback, image fit, zoom & lightbox states
+  // Video playback, video zoom, image fit & lightbox states
   const [isPlaying, setIsPlaying] = useState(true);
   const [speed, setSpeed] = useState(1);
+  const [videoZoomLevel, setVideoZoomLevel] = useState(1.35); // 1.35x default zoom to enlarge 3D exercise character
+  const [videoFitMode, setVideoFitMode] = useState('contain'); // 'contain' | 'cover'
   const [imageFitMode, setImageFitMode] = useState('contain');
   const [zoomLevel, setZoomLevel] = useState(1);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const videoRef = useRef(null);
 
-  // Combine standard database and custom exercises
-  const combinedExercises = [...customExercises, ...EXERCISE_DATABASE];
+  // Sync video playback rate with speed state
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.playbackRate = speed;
+    }
+  }, [speed, selectedExercise?.videoUrl, isPlaying]);
 
-  const filteredExercises = combinedExercises.filter((ex) => {
-    const matchesSearch =
-      (ex.nameTh || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (ex.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (ex.muscle || '').toLowerCase().includes(searchTerm.toLowerCase());
+  // Combine standard database and custom exercises safely
+  const combinedExercises = (customExercises || [])
+    .concat(EXERCISE_DATABASE || [])
+    .filter((ex) => ex && typeof ex === 'object' && (ex.id || ex.name || ex.nameTh));
 
-    if (!matchesSearch) return false;
+  // Base search filtered exercises (matching current search query)
+  const baseSearchExercises = useMemo(() => {
+    const searchLower = (searchTerm || '').toLowerCase().trim();
+    if (!searchLower) return combinedExercises;
+    return combinedExercises.filter((ex) => {
+      if (!ex) return false;
+      const nameTh = ex.nameTh || ex.name || '';
+      const name = ex.name || '';
+      const muscle = ex.muscle || '';
+      return (
+        nameTh.toLowerCase().includes(searchLower) ||
+        name.toLowerCase().includes(searchLower) ||
+        muscle.toLowerCase().includes(searchLower)
+      );
+    });
+  }, [combinedExercises, searchTerm]);
 
-    if (selectedCategory === 'ALL') return true;
-    if (selectedCategory === 'CUSTOM') return Boolean(ex.isCustom);
-    return ex.category === selectedCategory;
+  // Calculate dynamic count for each category filter chip (given selected equipment)
+  const getCategoryCount = (catKey) => {
+    return baseSearchExercises.filter((ex) => {
+      const matchesEquipment = selectedEquipment === 'ALL' ? true : ex.equipment === selectedEquipment;
+      if (!matchesEquipment) return false;
+
+      if (catKey === 'ALL') return true;
+      if (catKey === 'CUSTOM') return Boolean(ex.isCustom);
+      return ex.category === catKey;
+    }).length;
+  };
+
+  // Calculate dynamic count for each equipment filter chip (given selected category)
+  const getEquipmentCount = (eqKey) => {
+    return baseSearchExercises.filter((ex) => {
+      const matchesCategory =
+        selectedCategory === 'ALL'
+          ? true
+          : selectedCategory === 'CUSTOM'
+          ? Boolean(ex.isCustom)
+          : ex.category === selectedCategory;
+      if (!matchesCategory) return false;
+
+      if (eqKey === 'ALL') return true;
+      return ex.equipment === eqKey;
+    }).length;
+  };
+
+  // Final filtered list displayed in grid
+  const filteredExercises = baseSearchExercises.filter((ex) => {
+    const matchesCategory =
+      selectedCategory === 'ALL'
+        ? true
+        : selectedCategory === 'CUSTOM'
+        ? Boolean(ex.isCustom)
+        : ex.category === selectedCategory;
+
+    if (!matchesCategory) return false;
+
+    const matchesEquipment =
+      selectedEquipment === 'ALL' ? true : ex.equipment === selectedEquipment;
+
+    return matchesEquipment;
   });
 
   const handleOpenExercise = (ex) => {
@@ -133,6 +195,8 @@ export default function ExerciseLibrary() {
     setIsPlaying(true);
     setImageFitMode('contain');
     setZoomLevel(1);
+    setVideoZoomLevel(1.35);
+    setVideoFitMode('contain');
     setIsLightboxOpen(false);
   };
 
@@ -274,6 +338,11 @@ export default function ExerciseLibrary() {
 
         {/* Category Filter Chips */}
         <div className="flex items-center space-x-2 overflow-x-auto no-scrollbar pb-1">
+          <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider shrink-0 flex items-center space-x-1 mr-1">
+            <Layers className="w-3.5 h-3.5 text-cyan-400" />
+            <span>กลุ่มกล้ามเนื้อ:</span>
+          </span>
+
           <button
             onClick={() => setSelectedCategory('ALL')}
             className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
@@ -282,7 +351,7 @@ export default function ExerciseLibrary() {
                 : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
             }`}
           >
-            ทั้งหมด ({combinedExercises.length})
+            ทั้งหมด ({getCategoryCount('ALL')})
           </button>
 
           {customExercises.length > 0 && (
@@ -295,13 +364,14 @@ export default function ExerciseLibrary() {
               }`}
             >
               <Sparkles className="w-3.5 h-3.5" />
-              <span>✨ ท่าที่สร้างเอง ({customExercises.length})</span>
+              <span>✨ ท่าที่สร้างเอง ({getCategoryCount('CUSTOM')})</span>
             </button>
           )}
 
           {Object.keys(EXERCISE_CATEGORIES).map((catKey) => {
             const label = EXERCISE_CATEGORIES[catKey];
             const isSelected = selectedCategory === catKey;
+            const count = getCategoryCount(catKey);
             return (
               <button
                 key={catKey}
@@ -312,7 +382,45 @@ export default function ExerciseLibrary() {
                     : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
                 }`}
               >
-                {label.split(' ')[0]}
+                {label.split(' ')[0]} ({count})
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Equipment Filter Chips */}
+        <div className="flex items-center space-x-2 overflow-x-auto no-scrollbar pt-2.5 border-t border-slate-800/80 mt-2.5">
+          <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider shrink-0 flex items-center space-x-1 mr-1">
+            <Dumbbell className="w-3.5 h-3.5 text-cyan-400" />
+            <span>ประเภทอุปกรณ์:</span>
+          </span>
+
+          <button
+            onClick={() => setSelectedEquipment('ALL')}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
+              selectedEquipment === 'ALL'
+                ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-slate-950 font-black shadow-md shadow-cyan-500/20'
+                : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+            }`}
+          >
+            ทั้งหมด ({getEquipmentCount('ALL')})
+          </button>
+
+          {Object.keys(EQUIPMENT_TYPES).map((eqKey) => {
+            const label = EQUIPMENT_TYPES[eqKey];
+            const isSelected = selectedEquipment === eqKey;
+            const count = getEquipmentCount(eqKey);
+            return (
+              <button
+                key={eqKey}
+                onClick={() => setSelectedEquipment(eqKey)}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
+                  isSelected
+                    ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-slate-950 font-black shadow-md shadow-cyan-500/20'
+                    : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+                }`}
+              >
+                {label} ({count})
               </button>
             );
           })}
@@ -715,7 +823,7 @@ export default function ExerciseLibrary() {
 
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-5 bg-slate-950/90 backdrop-blur-md animate-fade-in">
-            <div className="w-full max-w-2xl max-h-[94vh] sm:max-h-[92vh] overflow-y-auto bg-[#131722] border border-slate-800 rounded-2xl sm:rounded-3xl shadow-2xl flex flex-col">
+            <div className="w-full max-w-4xl max-h-[96vh] sm:max-h-[94vh] overflow-y-auto bg-[#131722] border border-slate-800 rounded-2xl sm:rounded-3xl shadow-2xl flex flex-col">
               {/* Modal Top Header (Exercise Name at the VERY TOP) */}
               <div className="p-4 sm:p-5 border-b border-slate-800 bg-[#131722]/95 sticky top-0 z-30 flex items-center justify-between gap-3 backdrop-blur-md">
                 <div className="flex-1 min-w-0">
@@ -746,19 +854,32 @@ export default function ExerciseLibrary() {
                 </div>
               </div>
               
-              {/* Media Display Screen */}
-              <div className="relative w-full h-[380px] sm:h-[520px] md:h-[560px] bg-slate-950 overflow-hidden flex items-center justify-center select-none">
+              {/* Media Display Screen (Doubled Height) */}
+              <div className="relative w-full min-h-[500px] h-[65vh] sm:h-[750px] md:h-[850px] bg-slate-950 overflow-hidden flex items-center justify-center select-none">
                 {hasVideo ? (
-                  <video
-                    src={selectedExercise.videoUrl}
-                    autoPlay={isPlaying}
-                    loop
-                    playsInline
-                    className="max-h-full max-w-full object-contain object-center"
-                  />
+                  <div
+                    onClick={() => setVideoZoomLevel((prev) => (prev >= 2.2 ? 1.0 : Number((prev + 0.3).toFixed(2))))}
+                    className="relative w-full h-full flex items-center justify-center cursor-zoom-in overflow-hidden"
+                    title="คลิกที่วิดีโอเพื่อปรับระดับซูมขยาย (Zoom In / Out)"
+                  >
+                    <video
+                      ref={videoRef}
+                      key={selectedExercise.videoUrl}
+                      src={selectedExercise.videoUrl}
+                      autoPlay={isPlaying}
+                      loop
+                      playsInline
+                      style={{ transform: `scale(${videoZoomLevel})` }}
+                      className={`transition-transform duration-300 ${
+                        videoFitMode === 'cover'
+                          ? 'w-full h-full object-cover object-center'
+                          : 'max-h-full max-w-full object-contain object-center'
+                      }`}
+                    />
+                  </div>
                 ) : imgSrc ? (
                   <div
-                    onClick={() => setZoomLevel((prev) => (prev >= 2 ? 1 : Number((prev + 0.35).toFixed(2))))}
+                    onClick={() => setZoomLevel((prev) => (prev >= 2.5 ? 1 : Number((prev + 0.35).toFixed(2))))}
                     className="relative w-full h-full flex items-center justify-center cursor-zoom-in overflow-hidden"
                     title="คลิกที่รูปเพื่อซูมขยาย"
                   >
@@ -823,11 +944,11 @@ export default function ExerciseLibrary() {
                         <Edit3 className="w-4 h-4" />
                       </button>
                     )}
-                    {(selectedExercise.imageUrl || EXERCISE_IMAGE_MAP[selectedExercise.id]) && !hasVideo && (
+                    {(selectedExercise.imageUrl || EXERCISE_IMAGE_MAP[selectedExercise.id] || hasVideo) && (
                       <button
                         onClick={() => setIsLightboxOpen(true)}
                         className="p-1.5 rounded-full bg-black/70 hover:bg-slate-800 text-cyan-300 border border-white/20 transition-colors shadow-lg"
-                        title="ดูรูปภาพขนาดใหญ่เต็มจอ (Fullscreen)"
+                        title="เปิดดูวิดีโอ/รูปภาพเต็มจอ (Fullscreen)"
                       >
                         <Maximize2 className="w-4 h-4" />
                       </button>
@@ -845,41 +966,95 @@ export default function ExerciseLibrary() {
                 <div className="absolute bottom-3 inset-x-3 bg-black/85 backdrop-blur-md border border-white/10 rounded-2xl px-3 py-2 flex items-center justify-between text-xs z-10 shadow-2xl">
                   {hasVideo ? (
                     <>
-                      <div className="flex items-center space-x-3">
+                      <div className="flex items-center space-x-2 sm:space-x-3">
                         <button
                           onClick={() => setIsPlaying(!isPlaying)}
                           className="w-8 h-8 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 flex items-center justify-center transition-all shadow-md"
+                          title={isPlaying ? 'หยุดชั่วคราว' : 'เล่นวิดีโอ'}
                         >
                           {isPlaying ? <Pause className="w-4 h-4 fill-slate-950" /> : <Play className="w-4 h-4 fill-slate-950 ml-0.5" />}
                         </button>
                         <button
                           onClick={() => {
-                            setIsPlaying(false);
-                            setTimeout(() => setIsPlaying(true), 100);
+                            if (videoRef.current) {
+                              videoRef.current.currentTime = 0;
+                              videoRef.current.play();
+                              setIsPlaying(true);
+                            }
                           }}
                           className="p-1.5 rounded-lg text-slate-400 hover:text-white transition-colors"
                           title="เริ่มใหม่อีกรอบ"
                         >
                           <RotateCcw className="w-4 h-4" />
                         </button>
-                        <div className="text-[11px] text-slate-300 font-bold hidden sm:inline">
+                        <div className="text-[11px] text-slate-300 font-bold hidden md:inline">
                           {isPlaying ? 'กำลังเล่นวิดีโอ 3D Anatomy' : 'หยุดชั่วคราว'}
                         </div>
                       </div>
 
-                      <div className="flex items-center space-x-2">
-                        <span className="text-[10px] text-slate-400 font-bold">ความเร็ว:</span>
-                        {[0.5, 1, 1.5].map((s) => (
+                      {/* Speed & Video Zoom Controls */}
+                      <div className="flex items-center space-x-1.5 sm:space-x-2">
+                        {/* Speed Controls */}
+                        <div className="hidden sm:flex items-center space-x-1 border-r border-slate-700/60 pr-2 mr-1">
+                          <span className="text-[10px] text-slate-400 font-bold mr-1">ความเร็ว:</span>
+                          {[0.5, 1, 1.5].map((s) => (
+                            <button
+                              key={s}
+                              onClick={() => setSpeed(s)}
+                              className={`px-1.5 py-0.5 rounded text-[10px] font-extrabold transition-colors ${
+                                speed === s ? 'bg-cyan-500 text-slate-950' : 'bg-slate-800 text-slate-400 hover:text-white'
+                              }`}
+                            >
+                              {s}x
+                            </button>
+                          ))}
+                        </div>
+
+                        {/* Video Zoom & Fit Controls */}
+                        <div className="flex items-center space-x-1">
                           <button
-                            key={s}
-                            onClick={() => setSpeed(s)}
-                            className={`px-2 py-0.5 rounded text-[10px] font-extrabold transition-colors ${
-                              speed === s ? 'bg-cyan-500 text-slate-950' : 'bg-slate-800 text-slate-400 hover:text-white'
+                            onClick={() => setVideoFitMode(videoFitMode === 'cover' ? 'contain' : 'cover')}
+                            className={`px-2 py-0.5 rounded text-[10px] font-bold transition-colors border ${
+                              videoFitMode === 'cover'
+                                ? 'bg-amber-400 text-slate-950 border-amber-400'
+                                : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
                             }`}
+                            title="สลับโหมดพอดีจอ / ขยายเต็มจอ"
                           >
-                            {s}x
+                            {videoFitMode === 'cover' ? 'เต็มจอ' : 'พอดี'}
                           </button>
-                        ))}
+
+                          <button
+                            onClick={() => setVideoZoomLevel((z) => Math.max(0.8, Number((z - 0.2).toFixed(2))))}
+                            className="w-6 h-6 rounded bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs flex items-center justify-center border border-slate-700"
+                            title="ย่อขนาดวิดีโอ"
+                          >
+                            -
+                          </button>
+
+                          <span className="text-[10px] font-mono font-extrabold text-cyan-400 min-w-[32px] text-center">
+                            {Math.round(videoZoomLevel * 100)}%
+                          </span>
+
+                          <button
+                            onClick={() => setVideoZoomLevel((z) => Math.min(2.5, Number((z + 0.2).toFixed(2))))}
+                            className="w-6 h-6 rounded bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs flex items-center justify-center border border-slate-700"
+                            title="ขยายขนาดวิดีโอ"
+                          >
+                            +
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              setVideoZoomLevel(1.35);
+                              setVideoFitMode('contain');
+                            }}
+                            className="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-400 text-[10px] font-bold border border-slate-700"
+                            title="รีเซ็ตขนาด"
+                          >
+                            รีเซ็ต
+                          </button>
+                        </div>
                       </div>
                     </>
                   ) : (
@@ -999,13 +1174,13 @@ export default function ExerciseLibrary() {
 
             </div>
 
-            {/* Lightbox for Image */}
+            {/* Lightbox for Image / Video */}
             {isLightboxOpen && (
               <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl flex flex-col items-center justify-between p-3 sm:p-6 animate-fade-in select-none">
-                <div className="w-full max-w-4xl flex items-center justify-between text-white py-2">
+                <div className="w-full max-w-5xl flex items-center justify-between text-white py-2">
                   <div className="flex items-center space-x-3">
                     <span className="text-xs font-black px-3 py-1 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
-                      FULLSCREEN VIEW
+                      {hasVideo ? 'FULLSCREEN 3D VIDEO' : 'FULLSCREEN IMAGE'}
                     </span>
                     <h3 className="text-sm sm:text-base font-bold text-white truncate max-w-[200px] sm:max-w-md">
                       {selectedExercise.nameTh || selectedExercise.name}
@@ -1020,16 +1195,34 @@ export default function ExerciseLibrary() {
                 </div>
 
                 <div
-                  onClick={() => setZoomLevel((z) => (z >= 2.5 ? 1 : Number((z + 0.5).toFixed(2))))}
-                  className="relative flex-1 w-full max-w-5xl flex items-center justify-center overflow-hidden cursor-zoom-in my-2"
+                  onClick={() => {
+                    if (hasVideo) {
+                      setVideoZoomLevel((z) => (z >= 2.2 ? 1.0 : Number((z + 0.35).toFixed(2))));
+                    } else {
+                      setZoomLevel((z) => (z >= 2.5 ? 1 : Number((z + 0.5).toFixed(2))));
+                    }
+                  }}
+                  className="relative flex-1 w-full max-w-6xl flex items-center justify-center overflow-hidden cursor-zoom-in my-2"
                   title="คลิกเพื่อซูมเข้า/ออก"
                 >
-                  <img
-                    src={imgSrc}
-                    alt={selectedExercise.nameTh || selectedExercise.name}
-                    style={{ transform: `scale(${zoomLevel})` }}
-                    className="max-h-[78vh] sm:max-h-[82vh] w-auto max-w-full object-contain transition-transform duration-300 shadow-2xl"
-                  />
+                  {hasVideo ? (
+                    <video
+                      src={selectedExercise.videoUrl}
+                      autoPlay
+                      loop
+                      playsInline
+                      muted
+                      style={{ transform: `scale(${videoZoomLevel})` }}
+                      className="max-h-[80vh] sm:max-h-[85vh] w-auto max-w-full object-contain transition-transform duration-300 shadow-2xl"
+                    />
+                  ) : (
+                    <img
+                      src={imgSrc}
+                      alt={selectedExercise.nameTh || selectedExercise.name}
+                      style={{ transform: `scale(${zoomLevel})` }}
+                      className="max-h-[78vh] sm:max-h-[82vh] w-auto max-w-full object-contain transition-transform duration-300 shadow-2xl"
+                    />
+                  )}
                 </div>
 
                 <div className="w-full max-w-md bg-slate-900/90 border border-slate-700/80 rounded-2xl px-4 py-2.5 flex items-center justify-between shadow-2xl text-xs">
@@ -1039,22 +1232,31 @@ export default function ExerciseLibrary() {
                   </div>
                   <div className="flex items-center space-x-2">
                     <button
-                      onClick={() => setZoomLevel((z) => Math.max(0.8, Number((z - 0.25).toFixed(2))))}
+                      onClick={() => {
+                        if (hasVideo) setVideoZoomLevel((z) => Math.max(0.8, Number((z - 0.25).toFixed(2))));
+                        else setZoomLevel((z) => Math.max(0.8, Number((z - 0.25).toFixed(2))));
+                      }}
                       className="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-black flex items-center justify-center text-sm border border-slate-700"
                     >
                       -
                     </button>
                     <span className="text-xs font-mono font-bold text-cyan-400 min-w-[40px] text-center">
-                      {Math.round(zoomLevel * 100)}%
+                      {Math.round((hasVideo ? videoZoomLevel : zoomLevel) * 100)}%
                     </span>
                     <button
-                      onClick={() => setZoomLevel((z) => Math.min(3, Number((z + 0.25).toFixed(2))))}
+                      onClick={() => {
+                        if (hasVideo) setVideoZoomLevel((z) => Math.min(3, Number((z + 0.25).toFixed(2))));
+                        else setZoomLevel((z) => Math.min(3, Number((z + 0.25).toFixed(2))));
+                      }}
                       className="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-black flex items-center justify-center text-sm border border-slate-700"
                     >
                       +
                     </button>
                     <button
-                      onClick={() => setZoomLevel(1)}
+                      onClick={() => {
+                        if (hasVideo) setVideoZoomLevel(1.35);
+                        else setZoomLevel(1);
+                      }}
                       className="px-2.5 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-bold border border-slate-700 ml-1"
                     >
                       รีเซ็ต
