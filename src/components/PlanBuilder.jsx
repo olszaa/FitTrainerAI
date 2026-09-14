@@ -37,6 +37,7 @@ export default function PlanBuilder({ onStartWorkoutPlan }) {
   const [addExerciseModalOpen, setAddExerciseModalOpen] = useState(false);
   const [exerciseSearch, setExerciseSearch] = useState('');
   const [exerciseCategoryFilter, setExerciseCategoryFilter] = useState('ALL');
+  const [exerciseEquipmentFilter, setExerciseEquipmentFilter] = useState('ALL');
 
   const showNotification = (msg) => {
     setNotification(msg);
@@ -828,20 +829,53 @@ export default function PlanBuilder({ onStartWorkoutPlan }) {
               ))}
             </div>
 
+            {/* Equipment Filter for Exercises */}
+            <div className="flex items-center space-x-1 overflow-x-auto no-scrollbar py-0.5">
+              {[
+                { id: 'ALL', label: 'อุปกรณ์ทั้งหมด' },
+                { id: 'BARBELL', label: 'Barbell' },
+                { id: 'DUMBBELL', label: 'Dumbbell' },
+                { id: 'KETTLEBELL', label: 'Kettlebell' },
+                { id: 'MACHINE', label: 'Machine' },
+                { id: 'CABLE', label: 'Cable' },
+                { id: 'BODYWEIGHT', label: 'Bodyweight' },
+                { id: 'BAND', label: 'Band' },
+                { id: 'ROPE', label: 'Rope' },
+              ].map((eq) => (
+                <button
+                  key={eq.id}
+                  onClick={() => setExerciseEquipmentFilter(eq.id)}
+                  className={`px-2.5 py-1 rounded-lg text-[10px] font-bold shrink-0 transition-all ${
+                    exerciseEquipmentFilter === eq.id
+                      ? 'bg-amber-400 text-slate-950 font-black'
+                      : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+                  }`}
+                >
+                  {eq.label}
+                </button>
+              ))}
+            </div>
+
             {/* Exercise List */}
             <div className="flex-1 overflow-y-auto space-y-1.5 pr-1 max-h-72">
               {getAllExercises().filter((ex) => ex && typeof ex === 'object' && ex.id).filter((ex) => {
                 if (exerciseCategoryFilter !== 'ALL' && ex.category !== exerciseCategoryFilter) return false;
+                if (exerciseEquipmentFilter !== 'ALL') {
+                  const eqUpper = (ex.equipment || '').toUpperCase();
+                  const filterUpper = exerciseEquipmentFilter.toUpperCase();
+                  if (eqUpper !== filterUpper && !eqUpper.includes(filterUpper)) return false;
+                }
                 if (exerciseSearch.trim()) {
                   const q = exerciseSearch.toLowerCase();
                   const matchName = (ex.name || '').toLowerCase().includes(q);
                   const matchNameTh = (ex.nameTh || '').toLowerCase().includes(q);
                   const matchMuscle = (ex.muscle || '').toLowerCase().includes(q);
-                  if (!matchName && !matchNameTh && !matchMuscle) return false;
+                  const matchEq = (ex.equipment || '').toLowerCase().includes(q);
+                  if (!matchName && !matchNameTh && !matchMuscle && !matchEq) return false;
                 }
                 return true;
               }).map((ex) => {
-                const imgSrc = EXERCISE_IMAGE_MAP[ex.id];
+                const imgSrc = ex.imageUrl || EXERCISE_IMAGE_MAP[ex.id] || (ex.id ? `/exercises/${ex.id.replace(/-/g, '_')}.jpg` : '');
                 return (
                   <div
                     key={ex.id}
@@ -852,11 +886,15 @@ export default function PlanBuilder({ onStartWorkoutPlan }) {
                       {imgSrc ? (
                         <img
                           src={imgSrc}
-                          alt={ex.name}
-                          className="w-10 h-10 rounded-lg object-cover border border-slate-700 shrink-0"
+                          alt={ex.name || ex.nameTh}
+                          className="w-11 h-11 rounded-lg object-cover border border-slate-700/80 shrink-0 bg-slate-950"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = '/exercises/default.jpg';
+                          }}
                         />
                       ) : (
-                        <div className="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center text-cyan-400 font-bold text-xs shrink-0">
+                        <div className="w-11 h-11 rounded-lg bg-slate-800 flex items-center justify-center text-cyan-400 font-bold text-xs shrink-0 border border-slate-700">
                           {ex.category?.[0] || 'EX'}
                         </div>
                       )}
@@ -865,7 +903,7 @@ export default function PlanBuilder({ onStartWorkoutPlan }) {
                           {ex.nameTh || ex.name}
                         </div>
                         <div className="text-[10px] text-slate-400 truncate">
-                          {ex.name} • {ex.category}
+                          {ex.name} • {ex.category} • {ex.equipment || 'N/A'}
                         </div>
                       </div>
                     </div>

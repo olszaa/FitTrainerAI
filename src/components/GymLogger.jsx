@@ -206,6 +206,9 @@ export default function GymLogger({
 
   // Exercise Picker Modal
   const [addExerciseModalOpen, setAddExerciseModalOpen] = useState(false);
+  const [modalSearch, setModalSearch] = useState('');
+  const [modalCategoryFilter, setModalCategoryFilter] = useState('ALL');
+  const [modalEquipmentFilter, setModalEquipmentFilter] = useState('ALL');
 
   // Active workout timer tick (counts overall time, gym work time UP, gym rest DOWN, and cardio intervals AUTO-CONTINUOUS)
   useEffect(() => {
@@ -1770,45 +1773,160 @@ export default function GymLogger({
         {/* Add Exercise Modal in Setup */}
         {addExerciseModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-            <div className="w-full max-w-lg bg-[#131722] border border-slate-800 rounded-3xl p-6">
-              <h3 className="text-base font-extrabold text-white mb-4">เลือกท่าฝึกเพิ่มในโปรแกรม</h3>
-              <div className="max-h-72 overflow-y-auto space-y-2 pr-1 mb-4">
-                {EXERCISE_DATABASE.filter((ex) => ex && typeof ex === 'object' && ex.id).map((ex) => (
-                  <div
-                    key={ex.id}
-                    onClick={() => {
-                      const updated = { ...setupSession };
-                      updated.exercises.push({
-                        id: `setup-ex-${updated.exercises.length}-${Date.now()}`,
-                        exerciseId: ex.id,
-                        name: ex.nameTh || ex.name,
-                        englishName: ex.name || ex.id,
-                        category: ex.category || 'CHEST',
-                        equipment: ex.equipment || 'BARBELL',
-                        muscle: ex.muscle || '',
-                        targetRest: 30,
-                        sets: [
-                          { id: `setup-set-${Date.now()}-1`, setNum: 1, weight: 20, reps: 10, type: 'Warmup' },
-                          { id: `setup-set-${Date.now()}-2`, setNum: 2, weight: 25, reps: 10, type: 'Normal' },
-                          { id: `setup-set-${Date.now()}-3`, setNum: 3, weight: 25, reps: 10, type: 'Normal' },
-                        ],
-                      });
-                      setSetupSession(updated);
-                      setAddExerciseModalOpen(false);
-                    }}
-                    className="flex items-center justify-between p-3 rounded-xl bg-slate-900 border border-slate-800 hover:border-cyan-500/50 cursor-pointer transition-all"
+            <div className="w-full max-w-lg bg-[#131722] border border-slate-800 rounded-3xl p-5 space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-base font-extrabold text-white">เลือกท่าฝึกเพิ่มในโปรแกรม</h3>
+                <button
+                  onClick={() => setAddExerciseModalOpen(false)}
+                  className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Search */}
+              <div className="relative">
+                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="ค้นหาชื่อท่าฝึกภาษาไทย หรือ อังกฤษ..."
+                  value={modalSearch}
+                  onChange={(e) => setModalSearch(e.target.value)}
+                  className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl pl-8 pr-3 py-2 text-xs outline-none focus:border-cyan-500"
+                />
+              </div>
+
+              {/* Category Filter */}
+              <div className="flex items-center space-x-1 overflow-x-auto no-scrollbar py-0.5">
+                {[
+                  { id: 'ALL', label: 'ทั้งหมด' },
+                  { id: 'CHEST', label: 'อก' },
+                  { id: 'BACK', label: 'หลัง' },
+                  { id: 'SHOULDERS', label: 'ไหล่' },
+                  { id: 'ARMS', label: 'แขน' },
+                  { id: 'LEGS', label: 'ขา' },
+                  { id: 'ABS', label: 'หน้าท้อง' },
+                  { id: 'CARDIO', label: 'คาร์ดิโอ' },
+                ].map((c) => (
+                  <button
+                    key={c.id}
+                    onClick={() => setModalCategoryFilter(c.id)}
+                    className={`px-2.5 py-1 rounded-lg text-[10px] font-bold shrink-0 transition-all ${
+                      modalCategoryFilter === c.id
+                        ? 'bg-cyan-500 text-slate-950 font-black'
+                        : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+                    }`}
                   >
-                    <div>
-                      <div className="text-xs font-bold text-white">{ex.nameTh || ex.name}</div>
-                      <div className="text-[10px] text-slate-400">{ex.category} • {ex.equipment}</div>
-                    </div>
-                    <Plus className="w-4 h-4 text-cyan-400" />
-                  </div>
+                    {c.label}
+                  </button>
                 ))}
+              </div>
+
+              {/* Equipment Filter */}
+              <div className="flex items-center space-x-1 overflow-x-auto no-scrollbar py-0.5">
+                {[
+                  { id: 'ALL', label: 'อุปกรณ์ทั้งหมด' },
+                  { id: 'BARBELL', label: 'Barbell' },
+                  { id: 'DUMBBELL', label: 'Dumbbell' },
+                  { id: 'KETTLEBELL', label: 'Kettlebell' },
+                  { id: 'MACHINE', label: 'Machine' },
+                  { id: 'CABLE', label: 'Cable' },
+                  { id: 'BODYWEIGHT', label: 'Bodyweight' },
+                  { id: 'BAND', label: 'Band' },
+                  { id: 'ROPE', label: 'Rope' },
+                ].map((eq) => (
+                  <button
+                    key={eq.id}
+                    onClick={() => setModalEquipmentFilter(eq.id)}
+                    className={`px-2.5 py-1 rounded-lg text-[10px] font-bold shrink-0 transition-all ${
+                      modalEquipmentFilter === eq.id
+                        ? 'bg-amber-400 text-slate-950 font-black'
+                        : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+                    }`}
+                  >
+                    {eq.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Exercise List */}
+              <div className="max-h-72 overflow-y-auto space-y-2 pr-1">
+                {EXERCISE_DATABASE.filter((ex) => ex && typeof ex === 'object' && ex.id).filter((ex) => {
+                  if (modalCategoryFilter !== 'ALL' && ex.category !== modalCategoryFilter) return false;
+                  if (modalEquipmentFilter !== 'ALL') {
+                    const eqUpper = (ex.equipment || '').toUpperCase();
+                    const filterUpper = modalEquipmentFilter.toUpperCase();
+                    if (eqUpper !== filterUpper && !eqUpper.includes(filterUpper)) return false;
+                  }
+                  if (modalSearch.trim()) {
+                    const q = modalSearch.toLowerCase();
+                    const matchName = (ex.name || '').toLowerCase().includes(q);
+                    const matchNameTh = (ex.nameTh || '').toLowerCase().includes(q);
+                    const matchMuscle = (ex.muscle || '').toLowerCase().includes(q);
+                    const matchEq = (ex.equipment || '').toLowerCase().includes(q);
+                    if (!matchName && !matchNameTh && !matchMuscle && !matchEq) return false;
+                  }
+                  return true;
+                }).map((ex) => {
+                  const imgSrc = ex.imageUrl || EXERCISE_IMAGE_MAP[ex.id] || (ex.id ? `/exercises/${ex.id.replace(/-/g, '_')}.jpg` : '');
+                  return (
+                    <div
+                      key={ex.id}
+                      onClick={() => {
+                        const updated = { ...setupSession };
+                        updated.exercises.push({
+                          id: `setup-ex-${updated.exercises.length}-${Date.now()}`,
+                          exerciseId: ex.id,
+                          name: ex.nameTh || ex.name,
+                          englishName: ex.name || ex.id,
+                          category: ex.category || 'CHEST',
+                          equipment: ex.equipment || 'BARBELL',
+                          muscle: ex.muscle || '',
+                          targetRest: 30,
+                          sets: [
+                            { id: `setup-set-${Date.now()}-1`, setNum: 1, weight: 20, reps: 10, type: 'Warmup' },
+                            { id: `setup-set-${Date.now()}-2`, setNum: 2, weight: 25, reps: 10, type: 'Normal' },
+                            { id: `setup-set-${Date.now()}-3`, setNum: 3, weight: 25, reps: 10, type: 'Normal' },
+                          ],
+                        });
+                        setSetupSession(updated);
+                        setAddExerciseModalOpen(false);
+                      }}
+                      className="flex items-center justify-between p-2.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-cyan-500/50 cursor-pointer transition-all group"
+                    >
+                      <div className="flex items-center space-x-3 min-w-0">
+                        {imgSrc ? (
+                          <img
+                            src={imgSrc}
+                            alt={ex.name || ex.nameTh}
+                            className="w-10 h-10 rounded-lg object-cover border border-slate-700/80 shrink-0 bg-slate-950"
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = '/exercises/default.jpg';
+                            }}
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center text-cyan-400 font-bold text-xs shrink-0 border border-slate-700">
+                            {ex.category?.[0] || 'EX'}
+                          </div>
+                        )}
+                        <div className="min-w-0">
+                          <div className="text-xs font-bold text-white group-hover:text-cyan-300 transition-colors truncate">
+                            {ex.nameTh || ex.name}
+                          </div>
+                          <div className="text-[10px] text-slate-400 truncate">
+                            {ex.name} • {ex.category} • {ex.equipment || 'N/A'}
+                          </div>
+                        </div>
+                      </div>
+                      <Plus className="w-4 h-4 text-cyan-400 shrink-0" />
+                    </div>
+                  );
+                })}
               </div>
               <button
                 onClick={() => setAddExerciseModalOpen(false)}
-                className="w-full py-2.5 rounded-xl bg-slate-800 text-slate-300 font-bold text-xs"
+                className="w-full py-2 rounded-xl bg-slate-800 text-slate-300 font-bold text-xs hover:bg-slate-700"
               >
                 ยกเลิก
               </button>
@@ -2681,26 +2799,141 @@ export default function GymLogger({
       {/* Add Exercise Modal */}
       {addExerciseModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-          <div className="w-full max-w-lg bg-[#131722] border border-slate-800 rounded-3xl p-6">
-            <h3 className="text-base font-extrabold text-white mb-4">เพิ่มท่าฝึกในเซสชันนี้</h3>
-            <div className="max-h-72 overflow-y-auto space-y-2 pr-1 mb-4">
-              {getAllExercises().filter((ex) => ex && typeof ex === 'object' && ex.id).map((ex) => (
-                <div
-                  key={ex.id}
-                  onClick={() => handleAddExerciseToWorkout(ex.id)}
-                  className="flex items-center justify-between p-3 rounded-xl bg-slate-900 border border-slate-800 hover:border-cyan-500/50 cursor-pointer transition-all"
+          <div className="w-full max-w-lg bg-[#131722] border border-slate-800 rounded-3xl p-5 space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-extrabold text-white">เพิ่มท่าฝึกในเซสชันนี้</h3>
+              <button
+                onClick={() => setAddExerciseModalOpen(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Search */}
+            <div className="relative">
+              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="ค้นหาชื่อท่าฝึกภาษาไทย หรือ อังกฤษ..."
+                value={modalSearch}
+                onChange={(e) => setModalSearch(e.target.value)}
+                className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl pl-8 pr-3 py-2 text-xs outline-none focus:border-cyan-500"
+              />
+            </div>
+
+            {/* Category Filter */}
+            <div className="flex items-center space-x-1 overflow-x-auto no-scrollbar py-0.5">
+              {[
+                { id: 'ALL', label: 'ทั้งหมด' },
+                { id: 'CHEST', label: 'อก' },
+                { id: 'BACK', label: 'หลัง' },
+                { id: 'SHOULDERS', label: 'ไหล่' },
+                { id: 'ARMS', label: 'แขน' },
+                { id: 'LEGS', label: 'ขา' },
+                { id: 'ABS', label: 'หน้าท้อง' },
+                { id: 'CARDIO', label: 'คาร์ดิโอ' },
+              ].map((c) => (
+                <button
+                  key={c.id}
+                  onClick={() => setModalCategoryFilter(c.id)}
+                  className={`px-2.5 py-1 rounded-lg text-[10px] font-bold shrink-0 transition-all ${
+                    modalCategoryFilter === c.id
+                      ? 'bg-cyan-500 text-slate-950 font-black'
+                      : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+                  }`}
                 >
-                  <div>
-                    <div className="text-xs font-bold text-white">{ex.nameTh || ex.name}</div>
-                    <div className="text-[10px] text-slate-400">{ex.category} • {ex.equipment}</div>
-                  </div>
-                  <Plus className="w-4 h-4 text-cyan-400" />
-                </div>
+                  {c.label}
+                </button>
               ))}
+            </div>
+
+            {/* Equipment Filter */}
+            <div className="flex items-center space-x-1 overflow-x-auto no-scrollbar py-0.5">
+              {[
+                { id: 'ALL', label: 'อุปกรณ์ทั้งหมด' },
+                { id: 'BARBELL', label: 'Barbell' },
+                { id: 'DUMBBELL', label: 'Dumbbell' },
+                { id: 'KETTLEBELL', label: 'Kettlebell' },
+                { id: 'MACHINE', label: 'Machine' },
+                { id: 'CABLE', label: 'Cable' },
+                { id: 'BODYWEIGHT', label: 'Bodyweight' },
+                { id: 'BAND', label: 'Band' },
+                { id: 'ROPE', label: 'Rope' },
+              ].map((eq) => (
+                <button
+                  key={eq.id}
+                  onClick={() => setModalEquipmentFilter(eq.id)}
+                  className={`px-2.5 py-1 rounded-lg text-[10px] font-bold shrink-0 transition-all ${
+                    modalEquipmentFilter === eq.id
+                      ? 'bg-amber-400 text-slate-950 font-black'
+                      : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+                  }`}
+                >
+                  {eq.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Exercise List */}
+            <div className="max-h-72 overflow-y-auto space-y-2 pr-1">
+              {getAllExercises().filter((ex) => ex && typeof ex === 'object' && ex.id).filter((ex) => {
+                if (modalCategoryFilter !== 'ALL' && ex.category !== modalCategoryFilter) return false;
+                if (modalEquipmentFilter !== 'ALL') {
+                  const eqUpper = (ex.equipment || '').toUpperCase();
+                  const filterUpper = modalEquipmentFilter.toUpperCase();
+                  if (eqUpper !== filterUpper && !eqUpper.includes(filterUpper)) return false;
+                }
+                if (modalSearch.trim()) {
+                  const q = modalSearch.toLowerCase();
+                  const matchName = (ex.name || '').toLowerCase().includes(q);
+                  const matchNameTh = (ex.nameTh || '').toLowerCase().includes(q);
+                  const matchMuscle = (ex.muscle || '').toLowerCase().includes(q);
+                  const matchEq = (ex.equipment || '').toLowerCase().includes(q);
+                  if (!matchName && !matchNameTh && !matchMuscle && !matchEq) return false;
+                }
+                return true;
+              }).map((ex) => {
+                const imgSrc = ex.imageUrl || EXERCISE_IMAGE_MAP[ex.id] || (ex.id ? `/exercises/${ex.id.replace(/-/g, '_')}.jpg` : '');
+                return (
+                  <div
+                    key={ex.id}
+                    onClick={() => handleAddExerciseToWorkout(ex.id)}
+                    className="flex items-center justify-between p-2.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-cyan-500/50 cursor-pointer transition-all group"
+                  >
+                    <div className="flex items-center space-x-3 min-w-0">
+                      {imgSrc ? (
+                        <img
+                          src={imgSrc}
+                          alt={ex.name || ex.nameTh}
+                          className="w-10 h-10 rounded-lg object-cover border border-slate-700/80 shrink-0 bg-slate-950"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = '/exercises/default.jpg';
+                          }}
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center text-cyan-400 font-bold text-xs shrink-0 border border-slate-700">
+                          {ex.category?.[0] || 'EX'}
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <div className="text-xs font-bold text-white group-hover:text-cyan-300 transition-colors truncate">
+                          {ex.nameTh || ex.name}
+                        </div>
+                        <div className="text-[10px] text-slate-400 truncate">
+                          {ex.name} • {ex.category} • {ex.equipment || 'N/A'}
+                        </div>
+                      </div>
+                    </div>
+                    <Plus className="w-4 h-4 text-cyan-400 shrink-0" />
+                  </div>
+                );
+              })}
             </div>
             <button
               onClick={() => setAddExerciseModalOpen(false)}
-              className="w-full py-2.5 rounded-xl bg-slate-800 text-slate-300 font-bold text-xs"
+              className="w-full py-2 rounded-xl bg-slate-800 text-slate-300 font-bold text-xs hover:bg-slate-700"
             >
               ยกเลิก
             </button>
