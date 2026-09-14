@@ -76,9 +76,14 @@ export default function GymLogger({
   });
   const [timerRunning, setTimerRunning] = useState(() => !!activeWorkout);
 
-  // Sync custom plans when component mounts or updates
+  // Sync custom plans whenever screen mounts, updates or window gains focus
   useEffect(() => {
-    setCustomPlans(getCustomPlans());
+    const syncPlans = () => {
+      setCustomPlans(getCustomPlans());
+    };
+    syncPlans();
+    window.addEventListener('focus', syncPlans);
+    return () => window.removeEventListener('focus', syncPlans);
   }, [templateToOpen, workoutSession, setupSession, activeWorkout]);
 
   // If a template was triggered from PlanBuilder or AI Coach, automatically open its setup
@@ -320,8 +325,10 @@ export default function GymLogger({
   };
 
   // Open setup screen for a routine
-  const handleOpenSetup = (template) => {
-    if (!template) return;
+  const handleOpenSetup = (templateInput) => {
+    if (!templateInput) return;
+    const latestCustom = (getCustomPlans() || []).find((p) => p.id === templateInput.id);
+    const template = latestCustom || templateInput;
     const setup = {
       id: template.id,
       routineName: template.nameTh || template.name,
@@ -909,17 +916,20 @@ export default function GymLogger({
 
   // --- VIEW 1: SELECT ROUTINE TO START ---
   if (!workoutSession && !setupSession) {
-    const allCustomPlans = customPlans || [];
-    const customGymPlans = allCustomPlans.filter((t) => t.category === 'GYM' || !t.category);
-    const customHomePlans = allCustomPlans.filter((t) => t.category === 'HOME');
+    const currentCustomPlans = getCustomPlans() || [];
+    const customMap = new Map(currentCustomPlans.map((p) => [p.id, p]));
 
-    const builtInGymTemplates = WORKOUT_TEMPLATES.filter((t) => t.category === 'GYM');
-    const builtInHomeTemplates = WORKOUT_TEMPLATES.filter((t) => t.category === 'HOME');
+    const builtInGymTemplates = WORKOUT_TEMPLATES.filter((t) => t.category === 'GYM').map((t) => customMap.get(t.id) || t);
+    const builtInHomeTemplates = WORKOUT_TEMPLATES.filter((t) => t.category === 'HOME').map((t) => customMap.get(t.id) || t);
 
-    // Unified List: Custom first, then Gym, then Home
-    const allWorkoutTemplates = [...allCustomPlans, ...builtInGymTemplates, ...builtInHomeTemplates];
-    const gymTemplates = [...customGymPlans, ...builtInGymTemplates];
-    const homeTemplates = [...customHomePlans, ...builtInHomeTemplates];
+    const brandNewCustoms = currentCustomPlans.filter((p) => !WORKOUT_TEMPLATES.some((t) => t.id === p.id));
+    const allCustomPlans = currentCustomPlans;
+
+    const gymTemplates = [...brandNewCustoms.filter((t) => t.category === 'GYM' || !t.category), ...builtInGymTemplates];
+    const homeTemplates = [...brandNewCustoms.filter((t) => t.category === 'HOME'), ...builtInHomeTemplates];
+
+    // Unified List: Custom/Edited first, then Gym, then Home
+    const allWorkoutTemplates = [...brandNewCustoms, ...builtInGymTemplates, ...builtInHomeTemplates];
 
     const filteredTemplates =
       filterTag === 'CUSTOM'

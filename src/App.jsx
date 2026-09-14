@@ -224,7 +224,8 @@ export default function App() {
   };
 
   const handleStartWorkoutPlan = (template) => {
-    setTemplateToOpen(template);
+    const latestCustom = (getCustomPlans() || []).find((p) => p.id === template?.id);
+    setTemplateToOpen(latestCustom || template);
     setActiveTab('gym');
   };
 

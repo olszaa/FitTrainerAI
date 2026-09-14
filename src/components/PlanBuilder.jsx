@@ -66,15 +66,11 @@ export default function PlanBuilder({ onStartWorkoutPlan }) {
     if (e) e.stopPropagation();
     const cloned = JSON.parse(JSON.stringify(tmpl));
 
-    // If it's a built-in template, convert to a custom plan draft
-    const isBuiltIn = !tmpl.id?.startsWith('custom-');
-    if (isBuiltIn) {
-      cloned.id = `custom-plan-${Date.now()}`;
-      cloned.name = `${tmpl.nameTh || tmpl.name} (ฉบับแก้ไข)`;
-      cloned.nameTh = `${tmpl.nameTh || tmpl.name} (ฉบับแก้ไข)`;
-      cloned.isCustom = true;
-      cloned.wasBuiltIn = true;
-    }
+    // Preserve plan ID so changes sync directly to the selected routine in workout logger
+    cloned.isCustom = true;
+    cloned.id = tmpl.id;
+    cloned.name = tmpl.nameTh || tmpl.name;
+    cloned.nameTh = tmpl.nameTh || tmpl.name;
 
     // Ensure exercises have valid properties
     cloned.exercises = (cloned.exercises || []).filter((ex) => ex && typeof ex === 'object').map((ex) => {
@@ -202,8 +198,11 @@ export default function PlanBuilder({ onStartWorkoutPlan }) {
     setAddExerciseModalOpen(false);
   };
 
-  // Combined Templates: Custom First, then Built-in
-  const allTemplates = [...customPlans, ...WORKOUT_TEMPLATES];
+  // Combined Templates: Custom-edited versions override built-ins by ID
+  const customMap = new Map((customPlans || []).map((p) => [p.id, p]));
+  const effectiveBuiltIns = WORKOUT_TEMPLATES.map((t) => customMap.get(t.id) || t);
+  const brandNewCustoms = (customPlans || []).filter((p) => !WORKOUT_TEMPLATES.some((t) => t.id === p.id));
+  const allTemplates = [...brandNewCustoms, ...effectiveBuiltIns];
 
   const filteredTemplates = allTemplates.filter((tmpl) => {
     const isCustom = tmpl.id?.startsWith('custom-') || tmpl.isCustom;

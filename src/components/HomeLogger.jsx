@@ -86,7 +86,11 @@ export default function HomeLogger({ onFinishSession, templateToOpen = null, onC
     return () => clearInterval(interval);
   }, [activeSession, isPaused]);
 
-  const handleStartHomeSession = (routine) => {
+  const handleStartHomeSession = (routineInput) => {
+    if (!routineInput) return;
+    const latestCustom = (getCustomPlans() || []).find((p) => p.id === routineInput.id);
+    const routine = latestCustom || routineInput;
+
     const fullExercises = (routine?.exercises || []).filter((item) => item && typeof item === 'object').map((item) => {
       const dbEx = EXERCISE_DATABASE.find((e) => e.id === item.exerciseId) || {};
       return {
